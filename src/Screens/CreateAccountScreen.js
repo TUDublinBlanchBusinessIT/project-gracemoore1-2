@@ -7,18 +7,35 @@ import {
   Alert,
   StyleSheet,
 } from 'react-native';
-import { auth } from '../firebaseConfig'; // Adjust path as necessary
+import { auth } from '../firebaseConfig'; // Adjust path
 import { createUserWithEmailAndPassword } from 'firebase/auth';
+import { db } from '../firebaseConfig'; // Firestore reference
+import { doc, setDoc } from 'firebase/firestore';
 
 const CreateAccountScreen = ({ navigation }) => {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState(''); // State for email input
+  const [password, setPassword] = useState(''); // State for password input
 
   const handleRegister = async () => {
+    if (!name || !email || !password) {
+      Alert.alert('Error', 'Please fill in all fields.');
+      return;
+    }
+
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-      Alert.alert('Registration Successful', `Welcome, ${userCredential.user.email}`);
-      navigation.navigate('Login'); // Redirect back to login screen
+      const user = userCredential.user;
+
+      // Save user's name and email to Firestore
+      await setDoc(doc(db, 'users', user.uid), {
+        name: name,
+        email: email,
+        password: password,
+      });
+
+      Alert.alert('Registration Successful', `Welcome, ${name}`);
+      navigation.navigate('Login'); // Redirect back to the login screen
     } catch (error) {
       Alert.alert('Registration Failed', error.message);
     }
@@ -28,6 +45,15 @@ const CreateAccountScreen = ({ navigation }) => {
     <View style={styles.container}>
       <Text style={styles.title}>Create Account</Text>
 
+      {/* Name Input */}
+      <TextInput
+        style={styles.input}
+        placeholder="Name"
+        value={name}
+        onChangeText={setName}
+      />
+
+      {/* Email Input */}
       <TextInput
         style={styles.input}
         placeholder="Email"
@@ -36,6 +62,8 @@ const CreateAccountScreen = ({ navigation }) => {
         keyboardType="email-address"
         autoCapitalize="none"
       />
+
+      {/* Password Input */}
       <TextInput
         style={styles.input}
         placeholder="Password"
@@ -44,10 +72,12 @@ const CreateAccountScreen = ({ navigation }) => {
         secureTextEntry
       />
 
+      {/* Register Button */}
       <TouchableOpacity style={styles.button} onPress={handleRegister}>
         <Text style={styles.buttonText}>Register</Text>
       </TouchableOpacity>
 
+      {/* Redirect to Login */}
       <TouchableOpacity onPress={() => navigation.navigate('Login')}>
         <Text style={styles.link}>Already have an account? Login here!</Text>
       </TouchableOpacity>
