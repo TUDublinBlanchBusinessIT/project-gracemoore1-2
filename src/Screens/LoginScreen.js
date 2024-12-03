@@ -26,7 +26,7 @@ const LoginScreen = ({ navigation }) => {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Welcome to PennyPlanner</Text>
+      <Text style={styles.title}>Welcome to PennyPlanner!</Text>
       <Text style={styles.subtitle}>Login</Text>
 
       <TextInput
@@ -61,35 +61,39 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     padding: 20,
-    backgroundColor: '#fff',
+    backgroundColor: '#E0F7FA',
   },
   title: {
-    fontSize: 24,
+    fontSize: 30,
     fontWeight: 'bold',
-    marginBottom: 20,
+    marginBottom: 40,
     textAlign: 'center',
+    fontFamily: 'serif',
   },
   subtitle: {
     fontSize: 18,
     fontWeight: 'bold',
     marginBottom: 20,
     textAlign: 'center',
+    fontFamily: 'serif',
   },
   input: {
     height: 40,
     borderColor: '#ccc',
+    backgroundColor: '#FFFFFF',
     borderWidth: 1,
     borderRadius: 5,
     marginBottom: 10,
     paddingHorizontal: 10,
   },
   button: {
-    backgroundColor: '#007BFF',
+    width: '50%', // Half the screen width
+    backgroundColor: '#00509E',
     paddingVertical: 10,
-    paddingHorizontal: 20,
     borderRadius: 5,
     alignItems: 'center',
-    marginTop: 10,
+    marginTop: 25,
+    alignSelf: 'center', // Center the button horizontally
   },
   buttonText: {
     color: '#fff',
@@ -97,8 +101,8 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   link: {
-    marginTop: 20,
-    color: '#007BFF',
+    marginTop: 35,
+    color: '#000000',
     textAlign: 'center',
     textDecorationLine: 'underline',
   },

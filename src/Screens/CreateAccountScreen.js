@@ -6,38 +6,55 @@ import {
   TouchableOpacity,
   Alert,
   StyleSheet,
+  Platform,
 } from 'react-native';
-import { auth } from '../firebaseConfig'; // Adjust path
+import { auth } from '../firebaseConfig';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
-import { db } from '../firebaseConfig'; // Firestore reference
+import { db } from '../firebaseConfig';
 import { doc, setDoc } from 'firebase/firestore';
 
 const CreateAccountScreen = ({ navigation }) => {
   const [name, setName] = useState('');
-  const [email, setEmail] = useState(''); // State for email input
-  const [password, setPassword] = useState(''); // State for password input
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+
+  // Helper function to handle alerts with fallback for web
+  const showAlert = (title, message) => {
+    if (Platform.OS === 'web') {
+      alert(`${title}: ${message}`);
+    } else {
+      Alert.alert(title, message);
+    }
+  };
 
   const handleRegister = async () => {
     if (!name || !email || !password) {
-      Alert.alert('Error', 'Please fill in all fields.');
+      console.log("Missing fields - showing alert");
+      showAlert('Error', 'Please fill in all fields.');
       return;
     }
 
     try {
+      console.log("Creating user...");
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
 
-      // Save user's name and email to Firestore
+      console.log("Saving user to Firestore...");
       await setDoc(doc(db, 'users', user.uid), {
-        name: name,
-        email: email,
-        password: password,
+        name,
+        email,
       });
+      console.log("User saved successfully.");
 
-      Alert.alert('Registration Successful', `Welcome, ${name}`);
-      navigation.navigate('Login'); // Redirect back to the login screen
+      showAlert('Registration Successful', `Welcome, ${name}`);
+      
+      // Delay navigation to ensure the alert is displayed
+      setTimeout(() => {
+        navigation.navigate('Login');
+      }, 500);
     } catch (error) {
-      Alert.alert('Registration Failed', error.message);
+      console.error("Error during registration:", error.message);
+      showAlert('Registration Failed', error.message);
     }
   };
 
@@ -74,7 +91,7 @@ const CreateAccountScreen = ({ navigation }) => {
 
       {/* Register Button */}
       <TouchableOpacity style={styles.button} onPress={handleRegister}>
-        <Text style={styles.buttonText}>Register</Text>
+        <Text style={styles.buttonText}>Make Account</Text>
       </TouchableOpacity>
 
       {/* Redirect to Login */}
@@ -90,29 +107,32 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     padding: 20,
-    backgroundColor: '#fff',
+    backgroundColor: '#E0F7FA',
   },
   title: {
     fontSize: 24,
     fontWeight: 'bold',
-    marginBottom: 20,
+    marginBottom: 50,
     textAlign: 'center',
+    fontFamily: 'serif',
   },
   input: {
     height: 40,
     borderColor: '#ccc',
+    backgroundColor: '#FFFFFF',
     borderWidth: 1,
     borderRadius: 5,
     marginBottom: 10,
     paddingHorizontal: 10,
   },
   button: {
-    backgroundColor: '#007BFF',
+    width: '50%', // Half the screen width
+    backgroundColor: '#00509E',
     paddingVertical: 10,
-    paddingHorizontal: 20,
     borderRadius: 5,
     alignItems: 'center',
-    marginTop: 10,
+    marginTop: 25,
+    alignSelf: 'center', // Center the button horizontally
   },
   buttonText: {
     color: '#fff',
@@ -120,8 +140,8 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   link: {
-    marginTop: 20,
-    color: '#007BFF',
+    marginTop: 35,
+    color: '#000000',
     textAlign: 'center',
     textDecorationLine: 'underline',
   },
