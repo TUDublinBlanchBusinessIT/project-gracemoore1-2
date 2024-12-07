@@ -3,6 +3,8 @@ import { View, Text, TextInput, TouchableOpacity, Alert, StyleSheet } from 'reac
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { auth, db } from '../firebaseConfig'; // Firebase configuration
 import { doc, updateDoc } from 'firebase/firestore'; // Firestore methods
+import { Platform } from 'react-native';
+
 
 const BudgetSetupScreen = ({ navigation }) => {
   const [budgetAmount, setBudgetAmount] = useState('');
@@ -75,7 +77,7 @@ const BudgetSetupScreen = ({ navigation }) => {
         <DateTimePicker
           value={startDate}
           mode="date"
-          display="default"
+          display={Platform.OS === 'ios' ? 'compact' : 'calendar'} 
           onChange={(event, date) => {
             setShowStartPicker(false);
             if (date) setStartDate(date);
@@ -92,7 +94,7 @@ const BudgetSetupScreen = ({ navigation }) => {
         <DateTimePicker
           value={endDate}
           mode="date"
-          display="default"
+          display={Platform.OS === 'ios' ? 'compact' : 'calendar'} 
           onChange={(event, date) => {
             setShowEndPicker(false);
             if (date) setEndDate(date);
