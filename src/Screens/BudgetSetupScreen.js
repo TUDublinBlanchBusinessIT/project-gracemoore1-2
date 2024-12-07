@@ -5,6 +5,8 @@ import { auth, db } from '../firebaseConfig'; // Firebase configuration
 import { doc, updateDoc } from 'firebase/firestore'; // Firestore methods
 import { Platform } from 'react-native';
 
+import DatePicker from 'react-datepicker';
+import 'react-datepicker/dist/react-datepicker.css';
 
 const BudgetSetupScreen = ({ navigation }) => {
   const [budgetAmount, setBudgetAmount] = useState('');
@@ -70,10 +72,21 @@ const BudgetSetupScreen = ({ navigation }) => {
       />
 
       {/* Start Date Picker */}
+      {Platform.OS === 'web' ? (
+        <View style={styles.datePickerWeb}>
+          <Text style={styles.datePickerText}>Start Date:</Text>
+          <DatePicker
+            selected={startDate}
+            onChange={(date) => setStartDate(date)}
+            dateFormat="yyyy/MM/dd"
+          />
+        </View>
+      ) : (
       <TouchableOpacity onPress={() => setShowStartPicker(true)} style={styles.datePickerButton}>
         <Text style={styles.datePickerText}>Start Date: {startDate.toDateString()}</Text>
       </TouchableOpacity>
-      {showStartPicker && (
+      )}
+      {showStartPicker && Platform.OS !== 'web' && (
         <DateTimePicker
           value={startDate}
           mode="date"
@@ -87,10 +100,21 @@ const BudgetSetupScreen = ({ navigation }) => {
 
 
       {/* End Date Picker */}
+      {Platform.OS === 'web' ? (
+        <View style={styles.datePickerWeb}>
+          <Text style={styles.datePickerText}>End Date:</Text>
+          <DatePicker
+            selected={endDate}
+            onChange={(date) => setEndDate(date)}
+            dateFormat="yyyy/MM/dd"
+          />
+        </View>
+      ) : (
       <TouchableOpacity onPress={() => setShowEndPicker(true)} style={styles.datePickerButton}>
         <Text style={styles.datePickerText}>End Date: {endDate.toDateString()}</Text>
       </TouchableOpacity>
-      {showEndPicker && (
+      )}
+      {showEndPicker && Platform.OS !== 'web' && (
         <DateTimePicker
           value={endDate}
           mode="date"
