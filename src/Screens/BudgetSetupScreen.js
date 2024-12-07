@@ -1,9 +1,8 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, Alert, StyleSheet } from 'react-native';
+import DateTimePicker from '@react-native-community/datetimepicker';
 import { auth, db } from '../firebaseConfig'; // Firebase configuration
 import { doc, updateDoc } from 'firebase/firestore'; // Firestore methods
-import DatePicker from 'react-datepicker'; // A React Native compatible DatePicker
-import 'react-datepicker/dist/react-datepicker.css';
 
 const BudgetSetupScreen = ({ navigation }) => {
   const [budgetAmount, setBudgetAmount] = useState('');
@@ -20,6 +19,11 @@ const BudgetSetupScreen = ({ navigation }) => {
 
     try {
       const user = auth.currentUser; // Get the currently logged-in user
+
+      if (!user) {
+        Alert.alert('Error', 'User not logged in.');
+        return;
+      }
 
       // Reference to the user's Firestore document
       const userDocRef = doc(db, 'users', user.uid);
@@ -48,7 +52,7 @@ const BudgetSetupScreen = ({ navigation }) => {
       console.error('Error setting budget:', error.message);
       Alert.alert('Error', 'Failed to set the budget. Please try again.');
     }
-  };
+  }
 
   return (
     <View style={styles.container}>
@@ -64,10 +68,7 @@ const BudgetSetupScreen = ({ navigation }) => {
       />
 
       {/* Start Date Picker */}
-      <TouchableOpacity
-        style={styles.datePickerButton}
-        onPress={() => setShowStartPicker(true)}
-      >
+      <TouchableOpacity onPress={() => setShowStartPicker(true)} style={styles.datePickerButton}>
         <Text style={styles.datePickerText}>Start Date: {startDate.toDateString()}</Text>
       </TouchableOpacity>
       {showStartPicker && (
@@ -75,18 +76,16 @@ const BudgetSetupScreen = ({ navigation }) => {
           value={startDate}
           mode="date"
           display="default"
-          onChange={(event, selectedDate) => {
+          onChange={(event, date) => {
             setShowStartPicker(false);
-            if (selectedDate) setStartDate(selectedDate);
+            if (date) setStartDate(date);
           }}
         />
       )}
 
+
       {/* End Date Picker */}
-      <TouchableOpacity
-        style={styles.datePickerButton}
-        onPress={() => setShowEndPicker(true)}
-      >
+      <TouchableOpacity onPress={() => setShowEndPicker(true)} style={styles.datePickerButton}>
         <Text style={styles.datePickerText}>End Date: {endDate.toDateString()}</Text>
       </TouchableOpacity>
       {showEndPicker && (
@@ -94,12 +93,13 @@ const BudgetSetupScreen = ({ navigation }) => {
           value={endDate}
           mode="date"
           display="default"
-          onChange={(event, selectedDate) => {
+          onChange={(event, date) => {
             setShowEndPicker(false);
-            if (selectedDate) setEndDate(selectedDate);
+            if (date) setEndDate(date);
           }}
         />
       )}
+
 
       {/* Submit Button */}
       <TouchableOpacity style={styles.button} onPress={handleSubmit}>
