@@ -112,7 +112,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 24,
     fontWeight: 'bold',
-    marginBottom: 50,
+    marginBottom: 80,
     textAlign: 'center',
     fontFamily: 'serif',
   },
@@ -126,7 +126,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
   },
   button: {
-    width: '50%', // Half the screen width
+    width: '40%', // Half the screen width
     backgroundColor: '#00509E',
     paddingVertical: 10,
     borderRadius: 5,

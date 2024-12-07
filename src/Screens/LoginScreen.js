@@ -9,6 +9,8 @@ import {
 } from 'react-native';
 import { auth } from '../firebaseConfig'; // Adjust path as necessary
 import { signInWithEmailAndPassword } from 'firebase/auth';
+import { db } from '../firebaseConfig';
+import { doc, getDoc } from 'firebase/firestore';
 
 const LoginScreen = ({ navigation }) => {
   const [email, setEmail] = useState('');
@@ -16,9 +18,31 @@ const LoginScreen = ({ navigation }) => {
 
   const handleLogin = async () => {
     try {
+      // Sign in the user with Firebase Auth
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
-      Alert.alert('Login Successful', `Welcome back, ${userCredential.user.email}`);
-      navigation.navigate('Folders'); // Navigate to main app screen
+      const user = userCredential.user;
+
+      // Fetch user data from Firestore
+      const userDoc = await getDoc(doc(db, 'users', user.uid));
+      if (userDoc.exists()) {
+        const userData = userDoc.data();
+
+        // Check if the budget is already set
+        if (userData.budgetSet) {
+          // Navigate to Homepage if budget is set and pass budget data
+          Alert.alert('Login Successful', `Welcome back, ${user.email}`);
+          navigation.navigate('Homepage', {
+            budgetAmount: userData.budgetAmount || 0,
+            budgetPeriod: userData.budgetPeriod || { startDate: '', endDate: '' },
+          });
+        } else {
+          // Navigate to BudgetSetupScreen if no budget is set
+          Alert.alert('Login Successful', `Welcome back, ${user.email}`);
+          navigation.navigate('BudgetSetup');
+        }
+      } else {
+        Alert.alert('Error', 'User data not found.');
+      }
     } catch (error) {
       Alert.alert('Login Failed', error.message);
     }
@@ -66,12 +90,12 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 30,
     fontWeight: 'bold',
-    marginBottom: 40,
+    marginBottom: 80,
     textAlign: 'center',
     fontFamily: 'serif',
   },
   subtitle: {
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: 'bold',
     marginBottom: 20,
     textAlign: 'center',
@@ -87,13 +111,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
   },
   button: {
-    width: '50%', // Half the screen width
+    width: '40%',
     backgroundColor: '#00509E',
     paddingVertical: 10,
     borderRadius: 5,
     alignItems: 'center',
     marginTop: 25,
-    alignSelf: 'center', // Center the button horizontally
+    alignSelf: 'center',
   },
   buttonText: {
     color: '#fff',
