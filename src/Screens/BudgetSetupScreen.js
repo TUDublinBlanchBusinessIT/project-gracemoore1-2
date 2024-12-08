@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, Alert, StyleSheet } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, Alert, StyleSheet, Platform } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { auth, db } from '../firebaseConfig'; // Firebase configuration
 import { doc, updateDoc } from 'firebase/firestore'; // Firestore methods
-import { Platform } from 'react-native';
+
 
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
@@ -73,13 +73,23 @@ const BudgetSetupScreen = ({ navigation }) => {
 
       {/* Start Date Picker */}
       {Platform.OS === 'web' ? (
-        <View style={styles.row}>
+        <View style={[styles.row, styles.datePickerContainer]}>
           <Text style={styles.label}>Start Date:</Text>
           <DatePicker
             selected={startDate}
             onChange={(date) => setStartDate(date)}
             dateFormat="yyyy/MM/dd"
             className="date-picker-input"
+            popperPlacement="bottom-start"
+            popperModifiers={[
+              {
+                name: 'preventOverflow',
+                options: {
+                  boundary: 'viewport', // Ensures the dropdown stays in the viewport
+                },
+              },
+            ]}
+  
           />
         </View>
       ) : (
@@ -92,7 +102,7 @@ const BudgetSetupScreen = ({ navigation }) => {
           value={startDate}
           mode="date"
           display={Platform.OS === 'ios' ? 'compact' : 'calendar'} 
-          onChange={(event, date) => {
+          onChange={(_, date) => {
             setShowStartPicker(false);
             if (date) setStartDate(date);
           }}
@@ -102,13 +112,23 @@ const BudgetSetupScreen = ({ navigation }) => {
 
       {/* End Date Picker */}
       {Platform.OS === 'web' ? (
-        <View style={styles.row}>
+        <View style={[styles.row, styles.datePickerContainer]}>
           <Text style={styles.label}>End Date:</Text>
           <DatePicker
             selected={endDate}
             onChange={(date) => setEndDate(date)}
             dateFormat="yyyy/MM/dd"
             className="date-picker-input"
+            popperPlacement="bottom-start"
+            popperModifiers={[
+              {
+                name: 'preventOverflow',
+                options: {
+                  boundary: 'viewport', // Ensures the dropdown stays in the viewport
+                },
+              },
+            ]}
+      
           />
         </View>
       ) : (
@@ -121,7 +141,7 @@ const BudgetSetupScreen = ({ navigation }) => {
           value={endDate}
           mode="date"
           display={Platform.OS === 'ios' ? 'compact' : 'calendar'} 
-          onChange={(event, date) => {
+          onChange={(_, date) => {
             setShowEndPicker(false);
             if (date) setEndDate(date);
           }}
@@ -142,25 +162,25 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'flex-start',
     padding: 20,
-    paddingTop: Platform.OS === 'web' ? 50 : 20,
+    paddingTop: Platform.OS === 'web' ? 50 : 130,
     backgroundColor: '#E0F7FA',
   },
   title: {
     fontSize: 30,
     fontWeight: 'bold',
-    marginBottom: Platform.OS === 'web' ? 50 : 20,
+    marginBottom: Platform.OS === 'web' ? 50 : 60,
     textAlign: 'center',
     fontFamily: 'serif',
   },
   input: {
     height: 40,
-    width: Platform.OS === 'web' ? '80%' : '90%', // Adjust width for web vs mobile
+    width:'80%', 
     alignSelf: 'center',
     borderColor: '#ccc',
     backgroundColor: '#FFFFFF',
     borderWidth: 1,
     borderRadius: 5,
-    marginBottom: 20,
+    marginBottom: Platform.OS === 'web' ? 20 : 30,
     paddingHorizontal: 10,
     fontFamily: 'serif',
   },
@@ -170,14 +190,16 @@ const styles = StyleSheet.create({
     borderRadius: 5,
     borderWidth: 1,
     borderColor: '#ccc',
-    marginBottom: 20,
+    marginBottom: Platform.OS === 'web' ? 20 : 0,
     fontFamily: 'serif',
   },
   row: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: Platform.OS === 'web' ? 20 : 10,
+    marginBottom: 20,
+    position: 'relative',
+    zIndex: 1,
   },
   label: {
     fontSize: Platform.OS === 'web' ? 16 : 14, // Smaller font for mobile
@@ -192,7 +214,7 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     borderRadius: 5,
     alignItems: 'center',
-    marginTop: 25,
+    marginTop: 50,
     alignSelf: 'center',
   },
   buttonText: {
