@@ -60,7 +60,7 @@ const BudgetSetupScreen = ({ navigation }) => {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Set Up Your Budget</Text>
+      <Text style={styles.title}>Set Up Your Budget!</Text>
 
       {/* Budget Amount Input */}
       <TextInput
@@ -73,17 +73,18 @@ const BudgetSetupScreen = ({ navigation }) => {
 
       {/* Start Date Picker */}
       {Platform.OS === 'web' ? (
-        <View style={styles.datePickerWeb}>
-          <Text style={styles.datePickerText}>Start Date:</Text>
+        <View style={styles.row}>
+          <Text style={styles.label}>Start Date:</Text>
           <DatePicker
             selected={startDate}
             onChange={(date) => setStartDate(date)}
             dateFormat="yyyy/MM/dd"
+            className="date-picker-input"
           />
         </View>
       ) : (
-      <TouchableOpacity onPress={() => setShowStartPicker(true)} style={styles.datePickerButton}>
-        <Text style={styles.datePickerText}>Start Date: {startDate.toDateString()}</Text>
+      <TouchableOpacity onPress={() => setShowStartPicker(true)} style={styles.input}>
+        <Text style={styles.dateText}>Start Date: {startDate.toDateString()}</Text>
       </TouchableOpacity>
       )}
       {showStartPicker && Platform.OS !== 'web' && (
@@ -101,17 +102,18 @@ const BudgetSetupScreen = ({ navigation }) => {
 
       {/* End Date Picker */}
       {Platform.OS === 'web' ? (
-        <View style={styles.datePickerWeb}>
-          <Text style={styles.datePickerText}>End Date:</Text>
+        <View style={styles.row}>
+          <Text style={styles.label}>End Date:</Text>
           <DatePicker
             selected={endDate}
             onChange={(date) => setEndDate(date)}
             dateFormat="yyyy/MM/dd"
+            className="date-picker-input"
           />
         </View>
       ) : (
-      <TouchableOpacity onPress={() => setShowEndPicker(true)} style={styles.datePickerButton}>
-        <Text style={styles.datePickerText}>End Date: {endDate.toDateString()}</Text>
+      <TouchableOpacity onPress={() => setShowEndPicker(true)} style={styles.input}>
+        <Text style={styles.dateText}>End Date: {endDate.toDateString()}</Text>
       </TouchableOpacity>
       )}
       {showEndPicker && Platform.OS !== 'web' && (
@@ -138,42 +140,60 @@ const BudgetSetupScreen = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: 'center',
+    justifyContent: 'flex-start',
     padding: 20,
+    paddingTop: Platform.OS === 'web' ? 50 : 20,
     backgroundColor: '#E0F7FA',
   },
   title: {
-    fontSize: 24,
+    fontSize: 30,
     fontWeight: 'bold',
-    marginBottom: 20,
+    marginBottom: Platform.OS === 'web' ? 50 : 20,
     textAlign: 'center',
+    fontFamily: 'serif',
   },
   input: {
     height: 40,
+    width: Platform.OS === 'web' ? '80%' : '90%', // Adjust width for web vs mobile
+    alignSelf: 'center',
     borderColor: '#ccc',
     backgroundColor: '#FFFFFF',
     borderWidth: 1,
     borderRadius: 5,
     marginBottom: 20,
     paddingHorizontal: 10,
+    fontFamily: 'serif',
   },
-  datePickerButton: {
+  dateText: {
     backgroundColor: '#FFFFFF',
     padding: 10,
     borderRadius: 5,
     borderWidth: 1,
     borderColor: '#ccc',
     marginBottom: 20,
+    fontFamily: 'serif',
   },
-  datePickerText: {
-    fontSize: 16,
-    color: '#000',
+  row: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: Platform.OS === 'web' ? 20 : 10,
   },
+  label: {
+    fontSize: Platform.OS === 'web' ? 16 : 14, // Smaller font for mobile
+    fontWeight: 'bold',
+    marginRight: 10,
+    fontFamily: 'serif',
+  },
+
   button: {
+    width: Platform.OS === 'web' ? '40%' : '60%', // Wider button for mobile
     backgroundColor: '#00509E',
     paddingVertical: 10,
     borderRadius: 5,
     alignItems: 'center',
+    marginTop: 25,
+    alignSelf: 'center',
   },
   buttonText: {
     color: '#fff',
