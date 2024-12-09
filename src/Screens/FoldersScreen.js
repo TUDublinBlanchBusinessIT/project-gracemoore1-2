@@ -9,8 +9,8 @@ import {
   Alert,
   Platform,
 } from 'react-native';
-import { auth, db } from '../firebaseConfig'; // Import your Firebase configuration
-import { doc, getDoc, updateDoc } from 'firebase/firestore'; // Firestore methods
+import { auth, db } from '../firebaseConfig';
+import { doc, getDoc, updateDoc } from 'firebase/firestore';
 
 const FolderScreen = () => {
   const [folders, setFolders] = useState([]);
@@ -21,7 +21,6 @@ const FolderScreen = () => {
   const [expenseInputId, setExpenseInputId] = useState(null);
   const [expenseValue, setExpenseValue] = useState('');
 
-  // Fetch user ID on component mount
   useEffect(() => {
     const user = auth.currentUser;
     if (user) {
@@ -30,7 +29,6 @@ const FolderScreen = () => {
     }
   }, []);
 
-  // Fetch folders from Firestore
   const fetchFolders = async (uid) => {
     try {
       const userDocRef = doc(db, 'users', uid);
@@ -45,7 +43,6 @@ const FolderScreen = () => {
     }
   };
 
-  // Add a new folder
   const addFolder = async () => {
     if (!newFolderName || !newAllocatedBudget) {
       Alert.alert('Error', 'Please fill in all fields.');
@@ -53,10 +50,10 @@ const FolderScreen = () => {
     }
 
     const newFolder = {
-      id: Date.now().toString(), // Unique ID
+      id: Date.now().toString(),
       name: newFolderName,
       allocatedBudget: parseFloat(newAllocatedBudget),
-      spentSoFar: 0, // Initialize spent amount
+      spentSoFar: 0,
     };
 
     const updatedFolders = [...folders, newFolder];
@@ -66,11 +63,9 @@ const FolderScreen = () => {
     setNewAllocatedBudget('');
     setShowAddFolder(false);
 
-    // Save updated folders to Firestore
     await saveFoldersToFirestore(updatedFolders);
   };
 
-  // Update folder expense
   const updateFolder = async (id, expense) => {
     const updatedFolders = folders.map((folder) =>
       folder.id === id
@@ -83,12 +78,10 @@ const FolderScreen = () => {
 
     setFolders(updatedFolders);
 
-    // Save updated folders to Firestore
     await saveFoldersToFirestore(updatedFolders);
-    setExpenseInputId(null); // Close the input after submission
+    setExpenseInputId(null);
   };
 
-  // Save folders to Firestore
   const saveFoldersToFirestore = async (updatedFolders) => {
     try {
       const userDocRef = doc(db, 'users', userId);
@@ -99,13 +92,16 @@ const FolderScreen = () => {
     }
   };
 
-  // Render each folder
+  const calculateRemainingBudget = () => {
+    const totalAllocated = folders.reduce((sum, folder) => sum + folder.allocatedBudget, 0);
+    const totalSpent = folders.reduce((sum, folder) => sum + folder.spentSoFar, 0);
+    return totalAllocated - totalSpent;
+  };
+
   const renderFolder = ({ item }) => (
     <View style={styles.folderCard}>
       <Text style={styles.folderName}>{item.name}</Text>
-      <Text style={styles.folderDetail}>
-        Allocated: £{item.allocatedBudget}
-      </Text>
+      <Text style={styles.folderDetail}>Allocated: £{item.allocatedBudget}</Text>
       <Text style={styles.folderDetail}>Spent So Far: £{item.spentSoFar}</Text>
       <Text style={styles.folderDetail}>
         Remaining: £{item.allocatedBudget - item.spentSoFar}
@@ -149,6 +145,12 @@ const FolderScreen = () => {
     <View style={styles.container}>
       <Text style={styles.title}>Folders</Text>
 
+      {/* Box displaying the remaining budget */}
+      <View style={styles.remainingBudgetBox}>
+        <Text style={styles.remainingBudgetText}>Remaining Budget:</Text>
+        <Text style={styles.remainingBudgetValue}>£{calculateRemainingBudget()}</Text>
+      </View>
+
       <TouchableOpacity
         style={styles.plusButton}
         onPress={() => setShowAddFolder(!showAddFolder)}
@@ -180,13 +182,13 @@ const FolderScreen = () => {
         data={folders}
         renderItem={renderFolder}
         keyExtractor={(item) => item.id}
-        numColumns={2} // Set static number of columns
+        numColumns={2}
         columnWrapperStyle={{
-          justifyContent: 'space-between', // Distribute items evenly
-          marginBottom: 20, // Add spacing between rows
+          justifyContent: 'space-between',
+          marginBottom: 20,
         }}
         contentContainerStyle={{
-          paddingHorizontal: 10, // Add padding to prevent edges touching
+          paddingHorizontal: 10,
           paddingBottom: 20,
         }}
       />
@@ -207,6 +209,23 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     marginTop: Platform.OS === 'web' ? 20 : 90,
     fontFamily: 'serif',
+  },
+  remainingBudgetBox: {
+    marginBottom: 20,
+    backgroundColor: '#FFFFFF',
+    padding: 15,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#ccc',
+    alignItems: 'center',
+  },
+  remainingBudgetText: {
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+  remainingBudgetValue: {
+    fontSize: 16,
+    color: '#555',
   },
   folderCard: {
     flex: 1,
@@ -295,9 +314,3 @@ const styles = StyleSheet.create({
 });
 
 export default FolderScreen;
-
-
-
-
-
-
