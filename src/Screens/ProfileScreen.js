@@ -4,24 +4,26 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
-  StyleSheet,
   Alert,
+  StyleSheet,
   Platform,
 } from 'react-native';
-import { auth, db } from '../firebaseConfig'; // Import Firebase configuration
-import { doc, getDoc, updateDoc } from 'firebase/firestore'; // Firestore methods
+import { auth, db } from '../firebaseConfig';
+import { signOut } from 'firebase/auth';
+import { doc, getDoc, updateDoc } from 'firebase/firestore';
+import DatePicker from 'react-datepicker';
+import 'react-datepicker/dist/react-datepicker.css';
 
-const ProfileScreen = () => {
+const ProfileScreen = ({ navigation }) => {
   const [userName, setUserName] = useState('');
   const [budgetAmount, setBudgetAmount] = useState(0);
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [isEditing, setIsEditing] = useState(false);
   const [newBudgetAmount, setNewBudgetAmount] = useState('');
-  const [newStartDate, setNewStartDate] = useState('');
-  const [newEndDate, setNewEndDate] = useState('');
+  const [newStartDate, setNewStartDate] = useState(new Date());
+  const [newEndDate, setNewEndDate] = useState(new Date());
 
-  // Fetch user data on mount
   useEffect(() => {
     const fetchUserData = async () => {
       try {
@@ -35,8 +37,8 @@ const ProfileScreen = () => {
           const userData = userDoc.data();
           setUserName(userData.name || 'User');
           setBudgetAmount(userData.budgetAmount || 0);
-          setStartDate(userData.budgetPeriod?.startDate || '');
-          setEndDate(userData.budgetPeriod?.endDate || '');
+          setStartDate(userData.budgetPeriod?.startDate.split('T')[0] || ''); // Extract only date
+          setEndDate(userData.budgetPeriod?.endDate.split('T')[0] || ''); // Extract only date
         }
       } catch (error) {
         console.error('Error fetching user data:', error);
@@ -47,7 +49,6 @@ const ProfileScreen = () => {
     fetchUserData();
   }, []);
 
-  // Save updated budget details
   const saveBudgetDetails = async () => {
     try {
       const user = auth.currentUser;
@@ -57,19 +58,30 @@ const ProfileScreen = () => {
       await updateDoc(userDocRef, {
         budgetAmount: parseFloat(newBudgetAmount),
         budgetPeriod: {
-          startDate: newStartDate,
-          endDate: newEndDate,
+          startDate: newStartDate.toISOString(),
+          endDate: newEndDate.toISOString(),
         },
       });
 
       setBudgetAmount(parseFloat(newBudgetAmount));
-      setStartDate(newStartDate);
-      setEndDate(newEndDate);
+      setStartDate(newStartDate.toISOString().split('T')[0]);
+      setEndDate(newEndDate.toISOString().split('T')[0]);
       setIsEditing(false);
       Alert.alert('Success', 'Budget updated successfully!');
     } catch (error) {
       console.error('Error updating budget details:', error);
       Alert.alert('Error', 'Failed to update budget details.');
+    }
+  };
+
+  const handleLogout = async () => {
+    try {
+      await signOut(auth);
+      Alert.alert('Success', 'Logged out successfully!');
+      navigation.replace('Login'); // Redirect to Login screen
+    } catch (error) {
+      console.error('Error logging out:', error);
+      Alert.alert('Error', 'Failed to log out.');
     }
   };
 
@@ -91,18 +103,25 @@ const ProfileScreen = () => {
             onChangeText={setNewBudgetAmount}
             keyboardType="numeric"
           />
-          <TextInput
-            style={styles.input}
-            placeholder="New Start Date"
-            value={newStartDate}
-            onChangeText={setNewStartDate}
-          />
-          <TextInput
-            style={styles.input}
-            placeholder="New End Date"
-            value={newEndDate}
-            onChangeText={setNewEndDate}
-          />
+
+          <View style={styles.datePickerContainer}>
+            <Text style={styles.dateLabel}>New Start Date:</Text>
+            <DatePicker
+              selected={newStartDate}
+              onChange={(date) => setNewStartDate(date)}
+              className="date-picker-input"
+            />
+          </View>
+
+          <View style={styles.datePickerContainer}>
+            <Text style={styles.dateLabel}>New End Date:</Text>
+            <DatePicker
+              selected={newEndDate}
+              onChange={(date) => setNewEndDate(date)}
+              className="date-picker-input"
+            />
+          </View>
+
           <TouchableOpacity style={styles.saveButton} onPress={saveBudgetDetails}>
             <Text style={styles.buttonText}>Save Changes</Text>
           </TouchableOpacity>
@@ -112,14 +131,18 @@ const ProfileScreen = () => {
           style={styles.editButton}
           onPress={() => {
             setNewBudgetAmount(budgetAmount.toString());
-            setNewStartDate(startDate);
-            setNewEndDate(endDate);
+            setNewStartDate(new Date(startDate));
+            setNewEndDate(new Date(endDate));
             setIsEditing(true);
           }}
         >
           <Text style={styles.buttonText}>Change Budget</Text>
         </TouchableOpacity>
       )}
+
+      <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
+        <Text style={styles.buttonText}>Logout</Text>
+      </TouchableOpacity>
     </View>
   );
 };
@@ -146,6 +169,7 @@ const styles = StyleSheet.create({
   editContainer: {
     marginTop: 20,
     width: '80%',
+    alignItems: 'center',
   },
   input: {
     height: 40,
@@ -155,6 +179,16 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     marginBottom: 10,
     backgroundColor: '#FFFFFF',
+    width: '100%',
+  },
+  datePickerContainer: {
+    marginBottom: 10,
+    alignItems: 'center',
+  },
+  dateLabel: {
+    fontSize: 16,
+    marginBottom: 5,
+    fontFamily: 'serif',
   },
   editButton: {
     backgroundColor: '#00509E',
@@ -167,6 +201,16 @@ const styles = StyleSheet.create({
     padding: 10,
     borderRadius: 5,
     marginTop: 10,
+    width: '100%',
+    alignItems: 'center',
+  },
+  logoutButton: {
+    backgroundColor: '#00509E',
+    padding: 10,
+    borderRadius: 5,
+    marginTop: 20,
+    width: '40%',
+    alignItems: 'center',
   },
   buttonText: {
     color: '#FFFFFF',
@@ -177,4 +221,6 @@ const styles = StyleSheet.create({
 });
 
 export default ProfileScreen;
+
+
 
