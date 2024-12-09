@@ -4,12 +4,15 @@ import { View, Text, StyleSheet } from 'react-native';
 const HomepageScreen = ({ route }) => {
   const { budgetAmount, budgetPeriod } = route.params;
 
+  const formattedStartDate = new Date(budgetPeriod.startDate).toLocaleDateString();
+  const formattedEndDate = new Date(budgetPeriod.endDate).toLocaleDateString();
+
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Welcome to Your Homepage!</Text>
       <Text style={styles.text}>Budget Amount: £{budgetAmount}</Text>
       <Text style={styles.text}>
-        Budget Period: {budgetPeriod.startDate} - {budgetPeriod.endDate}
+        Budget Period: {formattedStartDate} - {formattedEndDate}
       </Text>
     </View>
   );
