@@ -206,6 +206,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginBottom: 10,
     marginTop: Platform.OS === 'web' ? 20 : 90,
+    fontFamily: 'serif',
   },
   folderCard: {
     flex: 1,
