@@ -61,7 +61,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 30,
-    marginTop: Platform.OS === 'ios' ? -200 : 0,
+    marginTop: Platform.OS === 'ios' ? -10 : 0,
   },
   text: {
     fontSize: 16,
