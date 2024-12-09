@@ -1,7 +1,7 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Platform } from 'react-native';
 
-const HomepageScreen = ({ route }) => {
+const HomepageScreen = ({ route, navigation }) => {
   const { budgetAmount, budgetPeriod } = route.params;
 
   const formattedStartDate = new Date(budgetPeriod.startDate).toLocaleDateString();
@@ -9,14 +9,17 @@ const HomepageScreen = ({ route }) => {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Welcome to Your Homepage!</Text>
-      <Text style={styles.text}>Budget Amount: £{budgetAmount}</Text>
-      <Text style={styles.text}>
-        Budget Period: {formattedStartDate} - {formattedEndDate}
-      </Text>
+      {/* Decorative Oval for Budget Information */}
+      <View style={styles.oval}>
+        <Text style={styles.budgetText}>Budget Amount: £{budgetAmount}</Text>
+        <Text style={styles.budgetText}>
+          Budget Period: {formattedStartDate} - {formattedEndDate}
+        </Text>
+      </View>
 
-            {/* Buttons for Navigation */}
-            <TouchableOpacity 
+      <View style={styles.buttonContainer}>
+      {/* Buttons for Navigation */}
+      <TouchableOpacity 
         style={styles.button} 
         onPress={() => navigation.navigate('Folders')}
       >
@@ -36,6 +39,7 @@ const HomepageScreen = ({ route }) => {
       >
         <Text style={styles.buttonText}>My Profile</Text>
       </TouchableOpacity>
+     </View>
     </View>
   );
 };
@@ -47,22 +51,36 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: '#E0F7FA',
   },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginBottom: 20,
+  oval: {
+    width: Platform.OS === 'web' ? '30%' : '80%',
+    padding: 20,
+    borderRadius: 50, // Makes it an oval
+    backgroundColor: '#B3E5FC',
+    borderColor: '#00509E',
+    borderWidth: 2,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 30,
+    marginTop: Platform.OS === 'ios' ? -200 : 0,
   },
   text: {
     fontSize: 16,
     marginBottom: 20,
+    fontFamily: 'serif',
+  },
+  buttonContainer: {
+    marginTop: Platform.OS === 'ios' ? 60 : 30,
+    width: Platform.OS === 'ios' ? '60%' : '40%',
+    alignContent:'center',
+    justifyContent:'center',
   },
   button: {
-    width: '80%',
+    width: '60%',
+    alignContent:'center',
     backgroundColor: '#00509E',
     paddingVertical: 10,
     borderRadius: 5,
-    alignItems: 'center',
-    marginVertical: 10,
+    marginVertical: Platform.OS === 'ios' ? 20 : 10,
   },
   buttonText: {
     color: '#fff',

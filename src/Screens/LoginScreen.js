@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   Alert,
   StyleSheet,
+  Platform,
 } from 'react-native';
 import { auth } from '../firebaseConfig'; // Adjust path as necessary
 import { signInWithEmailAndPassword } from 'firebase/auth';
@@ -93,6 +94,7 @@ const styles = StyleSheet.create({
     marginBottom: 80,
     textAlign: 'center',
     fontFamily: 'serif',
+    marginTop: Platform.OS === 'ios' ? -50 : 0,
   },
   subtitle: {
     fontSize: 20,
@@ -100,6 +102,7 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     textAlign: 'center',
     fontFamily: 'serif',
+    marginTop: Platform.OS === 'ios' ? -30 : 0,
   },
   input: {
     height: 40,
