@@ -32,9 +32,12 @@ const LoginScreen = ({ navigation }) => {
         if (userData.budgetSet) {
           // Navigate to Homepage if budget is set and pass budget data
           Alert.alert('Login Successful', `Welcome back, ${user.email}`);
-          navigation.navigate('Homepage', {
+          navigation.navigate('Main', {
+            screen: 'Homepage',
+            params: {
             budgetAmount: userData.budgetAmount || 0,
             budgetPeriod: userData.budgetPeriod || { startDate: '', endDate: '' },
+            },
           });
         } else {
           // Navigate to BudgetSetupScreen if no budget is set

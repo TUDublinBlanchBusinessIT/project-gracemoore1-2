@@ -75,7 +75,7 @@ const styles = StyleSheet.create({
     width:Platform.OS === 'ios' ? '60%' : '40%',
   },
   button: {
-    width:Platform.OS === 'ios' ? '90%' : '40%',
+    width:Platform.OS === 'ios' ? '90%' : '80%',
     alignItems:'center',
     backgroundColor: '#00509E',
     paddingVertical: 10,
