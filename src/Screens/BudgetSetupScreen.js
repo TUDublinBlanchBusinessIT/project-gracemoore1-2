@@ -2,7 +2,8 @@ import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, Alert, StyleSheet, Platform } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { auth, db } from '../firebaseConfig'; // Firebase configuration
-import { doc, updateDoc } from 'firebase/firestore';
+import { doc, updateDoc } from 'firebase/firestore'; // Firestore methods
+
 
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
@@ -36,8 +37,8 @@ const BudgetSetupScreen = ({ navigation }) => {
         budgetSet: true, // Mark the budget as set
         budgetAmount: parseFloat(budgetAmount), // Convert amount to a number
         budgetPeriod: {
-          startDate: startDate.toISOString().split('T')[0], // Save only the date
-          endDate: endDate.toISOString().split('T')[0], // Save only the date
+          startDate: startDate.toISOString(), // Save dates as ISO strings
+          endDate: endDate.toISOString(),
         },
       });
 
@@ -47,15 +48,15 @@ const BudgetSetupScreen = ({ navigation }) => {
       navigation.navigate('Homepage', {
         budgetAmount: parseFloat(budgetAmount),
         budgetPeriod: {
-          startDate: startDate.toISOString().split('T')[0], // Pass only the date
-          endDate: endDate.toISOString().split('T')[0], // Pass only the date
+          startDate: startDate.toDateString(),
+          endDate: endDate.toDateString(),
         },
       });
     } catch (error) {
       console.error('Error setting budget:', error.message);
       Alert.alert('Error', 'Failed to set the budget. Please try again.');
     }
-  };
+  }
 
   return (
     <View style={styles.container}>
@@ -72,34 +73,27 @@ const BudgetSetupScreen = ({ navigation }) => {
 
       {/* Start Date Picker */}
       {Platform.OS === 'web' ? (
-        <View style={[styles.row, styles.datePickerContainer]}>
+        <View style={styles.row}>
           <Text style={styles.label}>Start Date:</Text>
           <DatePicker
             selected={startDate}
             onChange={(date) => setStartDate(date)}
             dateFormat="yyyy/MM/dd"
             className="date-picker-input"
-            popperPlacement="bottom-start"
-            popperModifiers={[
-              {
-                name: 'preventOverflow',
-                options: {
-                  boundary: 'viewport', // Ensures the dropdown stays in the viewport
-                },
-              },
-            ]}
+            popperPlacement="bottom-start" // Ensures dropdown opens below
           />
+  
         </View>
       ) : (
-        <TouchableOpacity onPress={() => setShowStartPicker(true)} style={styles.input}>
-          <Text style={styles.dateText}>Start Date: {startDate.toDateString()}</Text>
-        </TouchableOpacity>
+      <TouchableOpacity onPress={() => setShowStartPicker(true)} style={styles.input}>
+        <Text style={styles.dateText}>Start Date: {startDate.toDateString()}</Text>
+      </TouchableOpacity>
       )}
       {showStartPicker && Platform.OS !== 'web' && (
         <DateTimePicker
           value={startDate}
           mode="date"
-          display={Platform.OS === 'ios' ? 'compact' : 'calendar'}
+          display={Platform.OS === 'ios' ? 'compact' : 'calendar'} 
           onChange={(_, date) => {
             setShowStartPicker(false);
             if (date) setStartDate(date);
@@ -107,9 +101,10 @@ const BudgetSetupScreen = ({ navigation }) => {
         />
       )}
 
+
       {/* End Date Picker */}
       {Platform.OS === 'web' ? (
-        <View style={[styles.row, styles.datePickerContainer]}>
+        <View style={styles.row}>
           <Text style={styles.label}>End Date:</Text>
           <DatePicker
             selected={endDate}
@@ -117,32 +112,25 @@ const BudgetSetupScreen = ({ navigation }) => {
             dateFormat="yyyy/MM/dd"
             className="date-picker-input"
             popperPlacement="bottom-start"
-            popperModifiers={[
-              {
-                name: 'preventOverflow',
-                options: {
-                  boundary: 'viewport', // Ensures the dropdown stays in the viewport
-                },
-              },
-            ]}
           />
         </View>
       ) : (
-        <TouchableOpacity onPress={() => setShowEndPicker(true)} style={styles.input}>
-          <Text style={styles.dateText}>End Date: {endDate.toDateString()}</Text>
-        </TouchableOpacity>
+      <TouchableOpacity onPress={() => setShowEndPicker(true)} style={styles.input}>
+        <Text style={styles.dateText}>End Date: {endDate.toDateString()}</Text>
+      </TouchableOpacity>
       )}
       {showEndPicker && Platform.OS !== 'web' && (
         <DateTimePicker
           value={endDate}
           mode="date"
-          display={Platform.OS === 'ios' ? 'compact' : 'calendar'}
+          display={Platform.OS === 'ios' ? 'compact' : 'calendar'} 
           onChange={(_, date) => {
             setShowEndPicker(false);
             if (date) setEndDate(date);
           }}
         />
       )}
+
 
       {/* Submit Button */}
       <TouchableOpacity style={styles.button} onPress={handleSubmit}>
@@ -169,7 +157,7 @@ const styles = StyleSheet.create({
   },
   input: {
     height: 40,
-    width: '80%',
+    width: Platform.OS === 'web' ? '40%' : '80%', // Adjust width for web vs mobile
     alignSelf: 'center',
     borderColor: '#ccc',
     backgroundColor: '#FFFFFF',
@@ -183,31 +171,26 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     padding: 10,
     borderRadius: 5,
-    borderWidth: 1,
+    borderWidth: 0,
     borderColor: '#ccc',
-    marginBottom: Platform.OS === 'web' ? 20 : 0,
+    marginBottom: 0,
     fontFamily: 'serif',
   },
   row: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 20,
-    position: 'relative',
-    zIndex: 1,
-  },
-  datePickerContainer: {
-    position: 'relative', // Ensures correct positioning of dropdown
-    zIndex: 1,
+    marginBottom: Platform.OS === 'web' ? 20 : 20,
   },
   label: {
-    fontSize: Platform.OS === 'web' ? 16 : 14,
+    fontSize: Platform.OS === 'web' ? 16 : 14, // Smaller font for mobile
     fontWeight: 'bold',
     marginRight: 10,
     fontFamily: 'serif',
   },
+
   button: {
-    width: Platform.OS === 'web' ? '40%' : '60%',
+    width: Platform.OS === 'web' ? '40%' : '60%', // Wider button for mobile
     backgroundColor: '#00509E',
     paddingVertical: 10,
     borderRadius: 5,
@@ -223,5 +206,3 @@ const styles = StyleSheet.create({
 });
 
 export default BudgetSetupScreen;
-
-
