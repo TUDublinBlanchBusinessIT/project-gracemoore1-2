@@ -70,13 +70,13 @@ const styles = StyleSheet.create({
   },
   buttonContainer: {
     marginTop: Platform.OS === 'ios' ? 60 : 30,
-    width: Platform.OS === 'ios' ? '60%' : '40%',
-    alignContent:'center',
+    alignItems:'center',
     justifyContent:'center',
+    width:Platform.OS === 'ios' ? '60%' : '40%',
   },
   button: {
-    width: '60%',
-    alignContent:'center',
+    width:Platform.OS === 'ios' ? '90%' : '40%',
+    alignItems:'center',
     backgroundColor: '#00509E',
     paddingVertical: 10,
     borderRadius: 5,
