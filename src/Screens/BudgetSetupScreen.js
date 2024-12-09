@@ -81,6 +81,7 @@ const BudgetSetupScreen = ({ navigation }) => {
             dateFormat="yyyy/MM/dd"
             className="date-picker-input"
             popperPlacement="bottom-start" // Ensures dropdown opens below
+            portalId="root-portal"
           />
   
         </View>
@@ -112,6 +113,7 @@ const BudgetSetupScreen = ({ navigation }) => {
             dateFormat="yyyy/MM/dd"
             className="date-picker-input"
             popperPlacement="bottom-start"
+            portalId="root-portal"
           />
         </View>
       ) : (
