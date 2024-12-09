@@ -1,11 +1,11 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 
-const ProfileScreen = () => {
+const SpendingHistoryScreen = () => {
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>My Profile</Text>
-      <Text style={styles.text}>This is the Profile Screen.</Text>
+      <Text style={styles.title}>Spending History</Text>
+      <Text style={styles.text}>This is the Spending History Screen.</Text>
     </View>
   );
 };
@@ -27,4 +27,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default ProfileScreen;
+export default SpendingHistoryScreen;

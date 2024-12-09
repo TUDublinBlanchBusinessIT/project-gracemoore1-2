@@ -1,11 +1,11 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 
-const ProfileScreen = () => {
+const FoldersScreen = () => {
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>My Profile</Text>
-      <Text style={styles.text}>This is the Profile Screen.</Text>
+      <Text style={styles.title}>Folders</Text>
+      <Text style={styles.text}>This is the Folders Screen.</Text>
     </View>
   );
 };
@@ -27,4 +27,5 @@ const styles = StyleSheet.create({
   },
 });
 
-export default ProfileScreen;
+export default FoldersScreen;
+
