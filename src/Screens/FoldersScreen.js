@@ -18,7 +18,10 @@ const FolderScreen = () => {
   const [newFolderName, setNewFolderName] = useState('');
   const [newAllocatedBudget, setNewAllocatedBudget] = useState('');
   const [userId, setUserId] = useState(null);
+  const [expenseInputId, setExpenseInputId] = useState(null);
+  const [expenseValue, setExpenseValue] = useState('');
   const [remainingBudget, setRemainingBudget] = useState(0);
+  const [budgetAmount, setBudgetAmount] = useState(0);
 
   // Fetch user ID on component mount
   useEffect(() => {
@@ -26,7 +29,7 @@ const FolderScreen = () => {
     if (user) {
       setUserId(user.uid);
       fetchFolders(user.uid);
-      fetchRemainingBudget(user.uid);
+      fetchBudget(user.uid);
     }
   }, []);
 
@@ -45,22 +48,23 @@ const FolderScreen = () => {
     }
   };
 
-  // Fetch remaining budget from Firestore
-  const fetchRemainingBudget = async (uid) => {
+  // Fetch budget amount and calculate remaining budget
+  const fetchBudget = async (uid) => {
     try {
       const userDocRef = doc(db, 'users', uid);
       const userDoc = await getDoc(userDocRef);
 
       if (userDoc.exists() && userDoc.data().budgetAmount) {
-        const budgetAmount = userDoc.data().budgetAmount;
-        const spentSoFar = folders.reduce(
-          (total, folder) => total + folder.spentSoFar,
-          0
-        );
-        setRemainingBudget(budgetAmount - spentSoFar);
+        const totalSpent = userDoc
+          .data()
+          .folders.reduce((sum, folder) => sum + folder.spentSoFar, 0);
+        const userBudget = userDoc.data().budgetAmount;
+        setBudgetAmount(userBudget);
+        setRemainingBudget(userBudget - totalSpent);
       }
     } catch (error) {
       console.error('Error fetching budget:', error);
+      Alert.alert('Error', 'Failed to load budget information.');
     }
   };
 
@@ -87,6 +91,26 @@ const FolderScreen = () => {
 
     // Save updated folders to Firestore
     await saveFoldersToFirestore(updatedFolders);
+    fetchBudget(userId); // Update the remaining budget
+  };
+
+  // Update folder expense
+  const updateFolder = async (id, expense) => {
+    const updatedFolders = folders.map((folder) =>
+      folder.id === id
+        ? {
+            ...folder,
+            spentSoFar: folder.spentSoFar + expense,
+          }
+        : folder
+    );
+
+    setFolders(updatedFolders);
+
+    // Save updated folders to Firestore
+    await saveFoldersToFirestore(updatedFolders);
+    fetchBudget(userId); // Update the remaining budget
+    setExpenseInputId(null); // Close the input after submission
   };
 
   // Delete a folder
@@ -95,13 +119,8 @@ const FolderScreen = () => {
     setFolders(updatedFolders);
 
     // Save updated folders to Firestore
-    try {
-      const userDocRef = doc(db, 'users', userId);
-      await updateDoc(userDocRef, { folders: updatedFolders });
-    } catch (error) {
-      console.error('Error deleting folder:', error);
-      Alert.alert('Error', 'Failed to delete folder.');
-    }
+    await saveFoldersToFirestore(updatedFolders);
+    fetchBudget(userId); // Update the remaining budget
   };
 
   // Save folders to Firestore
@@ -118,6 +137,12 @@ const FolderScreen = () => {
   // Render each folder
   const renderFolder = ({ item }) => (
     <View style={styles.folderCard}>
+      <TouchableOpacity
+        style={styles.deleteButton}
+        onPress={() => deleteFolder(item.id)}
+      >
+        <Text style={styles.deleteButtonText}>X</Text>
+      </TouchableOpacity>
       <Text style={styles.folderName}>{item.name}</Text>
       <Text style={styles.folderDetail}>
         Allocated: £{item.allocatedBudget}
@@ -126,12 +151,38 @@ const FolderScreen = () => {
       <Text style={styles.folderDetail}>
         Remaining: £{item.allocatedBudget - item.spentSoFar}
       </Text>
-      <TouchableOpacity
-        style={styles.deleteButton}
-        onPress={() => deleteFolder(item.id)}
-      >
-        <Text style={styles.deleteButtonText}>X</Text>
-      </TouchableOpacity>
+      {expenseInputId === item.id ? (
+        <View style={styles.expenseInputContainer}>
+          <TextInput
+            style={styles.expenseInput}
+            placeholder="Enter Expense"
+            value={expenseValue}
+            onChangeText={setExpenseValue}
+            keyboardType="numeric"
+          />
+          <TouchableOpacity
+            style={styles.addExpenseButton}
+            onPress={() => {
+              const expense = parseFloat(expenseValue);
+              if (!isNaN(expense)) {
+                updateFolder(item.id, expense);
+                setExpenseValue('');
+              } else {
+                Alert.alert('Error', 'Please enter a valid number.');
+              }
+            }}
+          >
+            <Text style={styles.addExpenseText}>Submit</Text>
+          </TouchableOpacity>
+        </View>
+      ) : (
+        <TouchableOpacity
+          style={styles.addExpenseButton}
+          onPress={() => setExpenseInputId(item.id)}
+        >
+          <Text style={styles.addExpenseText}>+ Add Expense</Text>
+        </TouchableOpacity>
+      )}
     </View>
   );
 
@@ -139,11 +190,9 @@ const FolderScreen = () => {
     <View style={styles.container}>
       <Text style={styles.title}>Folders</Text>
 
-      {/* Remaining Budget Display */}
-      <View style={styles.remainingBudgetContainer}>
-        <Text style={styles.remainingBudgetText}>
-          Remaining Budget: £{remainingBudget}
-        </Text>
+      <View style={styles.budgetBox}>
+        <Text style={styles.budgetText}>Total Budget: £{budgetAmount}</Text>
+        <Text style={styles.budgetText}>Remaining: £{remainingBudget}</Text>
       </View>
 
       <TouchableOpacity
@@ -177,13 +226,13 @@ const FolderScreen = () => {
         data={folders}
         renderItem={renderFolder}
         keyExtractor={(item) => item.id}
-        numColumns={2} // Set static number of columns
+        numColumns={2}
         columnWrapperStyle={{
-          justifyContent: 'space-between', // Distribute items evenly
-          marginBottom: 20, // Add spacing between rows
+          justifyContent: 'space-between',
+          marginBottom: 20,
         }}
         contentContainerStyle={{
-          paddingHorizontal: 10, // Add padding to prevent edges touching
+          paddingHorizontal: 10,
           paddingBottom: 20,
         }}
       />
@@ -205,6 +254,17 @@ const styles = StyleSheet.create({
     marginTop: Platform.OS === 'web' ? 20 : 90,
     fontFamily: 'serif',
   },
+  budgetBox: {
+    backgroundColor: '#FFFFFF',
+    padding: 10,
+    borderRadius: 10,
+    alignItems: 'center',
+    marginBottom: 15,
+  },
+  budgetText: {
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
   folderCard: {
     flex: 1,
     margin: 5,
@@ -214,7 +274,20 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     borderWidth: 1,
     borderColor: '#ccc',
-    position: 'relative',
+  },
+  deleteButton: {
+    position: 'absolute',
+    top: 5,
+    right: 5,
+    backgroundColor: '#FF0000',
+    borderRadius: 10,
+    paddingHorizontal: 5,
+    zIndex: 1,
+  },
+  deleteButtonText: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: 'bold',
   },
   folderName: {
     fontSize: 18,
@@ -224,21 +297,6 @@ const styles = StyleSheet.create({
   folderDetail: {
     fontSize: 14,
     color: '#555',
-  },
-  deleteButton: {
-    position: 'absolute',
-    top: 5,
-    right: 5,
-    backgroundColor: '#FF4D4D',
-    borderRadius: 15,
-    width: 30,
-    height: 30,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  deleteButtonText: {
-    color: '#FFFFFF',
-    fontWeight: 'bold',
   },
   addFolderContainer: {
     backgroundColor: '#FFFFFF',
@@ -282,23 +340,29 @@ const styles = StyleSheet.create({
     fontSize: 28,
     color: '#FFFFFF',
   },
-  remainingBudgetContainer: {
-    backgroundColor: '#B3E5FC',
-    padding: 15,
-    borderRadius: 10,
-    marginBottom: 10,
-    alignItems: 'center',
+  expenseInputContainer: {
+    marginTop: 10,
+    width: '100%',
   },
-  remainingBudgetText: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#00509E',
+  expenseInput: {
+    borderWidth: 1,
+    borderColor: '#ccc',
+    borderRadius: 5,
+    paddingHorizontal: 10,
+    height: 40,
+    marginBottom: 10,
+  },
+  addExpenseButton: {
+    backgroundColor: '#00509E',
+    borderRadius: 5,
+    padding: 10,
+    alignItems: 'center',
+    marginTop: 5,
+  },
+  addExpenseText: {
+    color: '#FFFFFF',
+    fontSize: 14,
   },
 });
 
 export default FolderScreen;
-
-
-
-
-
