@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -8,43 +8,94 @@ import {
   FlatList,
   Alert,
 } from 'react-native';
+import { auth, db } from '../firebaseConfig'; // Import your Firebase configuration
+import { doc, getDoc, setDoc, updateDoc } from 'firebase/firestore'; // Firestore methods
 
 const FolderScreen = () => {
   const [folders, setFolders] = useState([]);
   const [showAddFolder, setShowAddFolder] = useState(false);
   const [newFolderName, setNewFolderName] = useState('');
   const [newAllocatedBudget, setNewAllocatedBudget] = useState('');
+  const [userId, setUserId] = useState(null);
 
-  const addFolder = () => {
+  // Fetch user ID on component mount
+  useEffect(() => {
+    const user = auth.currentUser;
+    if (user) {
+      setUserId(user.uid);
+      fetchFolders(user.uid);
+    }
+  }, []);
+
+  // Fetch folders from Firestore
+  const fetchFolders = async (uid) => {
+    try {
+      const userDocRef = doc(db, 'users', uid);
+      const userDoc = await getDoc(userDocRef);
+
+      if (userDoc.exists() && userDoc.data().folders) {
+        setFolders(userDoc.data().folders);
+      }
+    } catch (error) {
+      console.error('Error fetching folders:', error);
+      Alert.alert('Error', 'Failed to load folders.');
+    }
+  };
+
+  // Add a new folder
+  const addFolder = async () => {
     if (!newFolderName || !newAllocatedBudget) {
       Alert.alert('Error', 'Please fill in all fields.');
       return;
     }
+
     const newFolder = {
       id: Date.now().toString(), // Unique ID
       name: newFolderName,
       allocatedBudget: parseFloat(newAllocatedBudget),
       spentSoFar: 0, // Initialize spent amount
     };
-    setFolders([...folders, newFolder]);
+
+    const updatedFolders = [...folders, newFolder];
+
+    setFolders(updatedFolders);
     setNewFolderName('');
     setNewAllocatedBudget('');
     setShowAddFolder(false);
+
+    // Save updated folders to Firestore
+    await saveFoldersToFirestore(updatedFolders);
   };
 
-  const updateFolder = (id, expense) => {
-    setFolders((prevFolders) =>
-      prevFolders.map((folder) =>
-        folder.id === id
-          ? {
-              ...folder,
-              spentSoFar: folder.spentSoFar + expense,
-            }
-          : folder
-      )
+  // Update folder expense
+  const updateFolder = async (id, expense) => {
+    const updatedFolders = folders.map((folder) =>
+      folder.id === id
+        ? {
+            ...folder,
+            spentSoFar: folder.spentSoFar + expense,
+          }
+        : folder
     );
+
+    setFolders(updatedFolders);
+
+    // Save updated folders to Firestore
+    await saveFoldersToFirestore(updatedFolders);
   };
 
+  // Save folders to Firestore
+  const saveFoldersToFirestore = async (updatedFolders) => {
+    try {
+      const userDocRef = doc(db, 'users', userId);
+      await updateDoc(userDocRef, { folders: updatedFolders });
+    } catch (error) {
+      console.error('Error saving folders:', error);
+      Alert.alert('Error', 'Failed to save folder data.');
+    }
+  };
+
+  // Render each folder
   const renderFolder = ({ item }) => (
     <TouchableOpacity
       style={styles.folderCard}
@@ -87,12 +138,14 @@ const FolderScreen = () => {
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Folders</Text>
-      <FlatList
-        data={folders}
-        renderItem={renderFolder}
-        keyExtractor={(item) => item.id}
-        contentContainerStyle={{ paddingBottom: 20 }}
-      />
+
+      <TouchableOpacity
+        style={styles.plusButton}
+        onPress={() => setShowAddFolder(!showAddFolder)}
+      >
+        <Text style={styles.plusText}>{showAddFolder ? '-' : '+'}</Text>
+      </TouchableOpacity>
+
       {showAddFolder && (
         <View style={styles.addFolderContainer}>
           <TextInput
@@ -113,12 +166,13 @@ const FolderScreen = () => {
           </TouchableOpacity>
         </View>
       )}
-      <TouchableOpacity
-        style={styles.plusButton}
-        onPress={() => setShowAddFolder(!showAddFolder)}
-      >
-        <Text style={styles.plusText}>{showAddFolder ? '-' : '+'}</Text>
-      </TouchableOpacity>
+
+      <FlatList
+        data={folders}
+        renderItem={renderFolder}
+        keyExtractor={(item) => item.id}
+        contentContainerStyle={{ paddingBottom: 20 }}
+      />
     </View>
   );
 };
@@ -133,7 +187,7 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: 'bold',
     textAlign: 'center',
-    marginBottom: 20,
+    marginBottom: 10,
   },
   folderCard: {
     backgroundColor: '#FFFFFF',
@@ -181,22 +235,19 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   plusButton: {
-    position: 'absolute',
-    bottom: 30,
-    right: 30,
+    alignSelf: 'center',
+    marginVertical: 10,
     backgroundColor: '#00509E',
-    width: 60,
-    height: 60,
-    borderRadius: 30,
+    width: 50,
+    height: 50,
+    borderRadius: 25,
     justifyContent: 'center',
     alignItems: 'center',
   },
   plusText: {
-    fontSize: 36,
+    fontSize: 28,
     color: '#FFFFFF',
   },
 });
 
 export default FolderScreen;
-
-
