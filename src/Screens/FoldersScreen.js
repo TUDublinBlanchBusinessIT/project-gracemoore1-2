@@ -7,9 +7,10 @@ import {
   StyleSheet,
   FlatList,
   Alert,
+  Platform,
 } from 'react-native';
 import { auth, db } from '../firebaseConfig'; // Import your Firebase configuration
-import { doc, getDoc, setDoc, updateDoc } from 'firebase/firestore'; // Firestore methods
+import { doc, getDoc, updateDoc } from 'firebase/firestore'; // Firestore methods
 
 const FolderScreen = () => {
   const [folders, setFolders] = useState([]);
@@ -17,6 +18,8 @@ const FolderScreen = () => {
   const [newFolderName, setNewFolderName] = useState('');
   const [newAllocatedBudget, setNewAllocatedBudget] = useState('');
   const [userId, setUserId] = useState(null);
+  const [expenseInputId, setExpenseInputId] = useState(null);
+  const [expenseValue, setExpenseValue] = useState('');
 
   // Fetch user ID on component mount
   useEffect(() => {
@@ -82,6 +85,7 @@ const FolderScreen = () => {
 
     // Save updated folders to Firestore
     await saveFoldersToFirestore(updatedFolders);
+    setExpenseInputId(null); // Close the input after submission
   };
 
   // Save folders to Firestore
@@ -97,33 +101,7 @@ const FolderScreen = () => {
 
   // Render each folder
   const renderFolder = ({ item }) => (
-    <TouchableOpacity
-      style={styles.folderCard}
-      onPress={() =>
-        Alert.prompt(
-          `Add Expense to ${item.name}`,
-          'Enter the expense amount:',
-          [
-            {
-              text: 'Cancel',
-              style: 'cancel',
-            },
-            {
-              text: 'Submit',
-              onPress: (expense) => {
-                const expenseValue = parseFloat(expense);
-                if (!isNaN(expenseValue)) {
-                  updateFolder(item.id, expenseValue);
-                } else {
-                  Alert.alert('Error', 'Please enter a valid number.');
-                }
-              },
-            },
-          ],
-          'plain-text'
-        )
-      }
-    >
+    <View style={styles.folderCard}>
       <Text style={styles.folderName}>{item.name}</Text>
       <Text style={styles.folderDetail}>
         Allocated: £{item.allocatedBudget}
@@ -132,7 +110,39 @@ const FolderScreen = () => {
       <Text style={styles.folderDetail}>
         Remaining: £{item.allocatedBudget - item.spentSoFar}
       </Text>
-    </TouchableOpacity>
+      {expenseInputId === item.id ? (
+        <View style={styles.expenseInputContainer}>
+          <TextInput
+            style={styles.expenseInput}
+            placeholder="Enter Expense"
+            value={expenseValue}
+            onChangeText={setExpenseValue}
+            keyboardType="numeric"
+          />
+          <TouchableOpacity
+            style={styles.addExpenseButton}
+            onPress={() => {
+              const expense = parseFloat(expenseValue);
+              if (!isNaN(expense)) {
+                updateFolder(item.id, expense);
+                setExpenseValue('');
+              } else {
+                Alert.alert('Error', 'Please enter a valid number.');
+              }
+            }}
+          >
+            <Text style={styles.addExpenseText}>Submit</Text>
+          </TouchableOpacity>
+        </View>
+      ) : (
+        <TouchableOpacity
+          style={styles.addExpenseButton}
+          onPress={() => setExpenseInputId(item.id)}
+        >
+          <Text style={styles.addExpenseText}>+ Add Expense</Text>
+        </TouchableOpacity>
+      )}
+    </View>
   );
 
   return (
@@ -166,12 +176,19 @@ const FolderScreen = () => {
           </TouchableOpacity>
         </View>
       )}
-
       <FlatList
         data={folders}
         renderItem={renderFolder}
         keyExtractor={(item) => item.id}
-        contentContainerStyle={{ paddingBottom: 20 }}
+        numColumns={2} // Set static number of columns
+        columnWrapperStyle={{
+          justifyContent: 'space-between', // Distribute items evenly
+          marginBottom: 20, // Add spacing between rows
+        }}
+        contentContainerStyle={{
+          paddingHorizontal: 10, // Add padding to prevent edges touching
+          paddingBottom: 20,
+        }}
       />
     </View>
   );
@@ -188,12 +205,15 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     textAlign: 'center',
     marginBottom: 10,
+    marginTop: Platform.OS === 'web' ? 20 : 90,
   },
   folderCard: {
+    flex: 1,
+    margin: 5,
     backgroundColor: '#FFFFFF',
     borderRadius: 10,
     padding: 15,
-    marginBottom: 15,
+    alignItems: 'center',
     borderWidth: 1,
     borderColor: '#ccc',
   },
@@ -248,7 +268,35 @@ const styles = StyleSheet.create({
     fontSize: 28,
     color: '#FFFFFF',
   },
+  expenseInputContainer: {
+    marginTop: 10,
+    width: '100%',
+  },
+  expenseInput: {
+    borderWidth: 1,
+    borderColor: '#ccc',
+    borderRadius: 5,
+    paddingHorizontal: 10,
+    height: 40,
+    marginBottom: 10,
+  },
+  addExpenseButton: {
+    backgroundColor: '#00509E',
+    borderRadius: 5,
+    padding: 10,
+    alignItems: 'center',
+    marginTop: 5,
+  },
+  addExpenseText: {
+    color: '#FFFFFF',
+    fontSize: 14,
+  },
 });
 
 export default FolderScreen;
+
+
+
+
+
 
