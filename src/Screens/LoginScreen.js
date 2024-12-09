@@ -27,11 +27,16 @@ const LoginScreen = ({ navigation }) => {
       const userDoc = await getDoc(doc(db, 'users', user.uid));
       if (userDoc.exists()) {
         const userData = userDoc.data();
+        console.log('Fetched User Data:', userData); // Debugging log
+
+        const userName = userData.name || user.email; // Use name or fallback to email
+        console.log('User Name:', userName);
+
 
         // Check if the budget is already set
         if (userData.budgetSet) {
           // Navigate to Homepage if budget is set and pass budget data
-          Alert.alert('Login Successful', `Welcome back, ${user.email}`);
+          Alert.alert('Login Successful', `Welcome back, ${userName}`);
           navigation.navigate('Main', {
             screen: 'Homepage',
             params: {
@@ -41,7 +46,7 @@ const LoginScreen = ({ navigation }) => {
           });
         } else {
           // Navigate to BudgetSetupScreen if no budget is set
-          Alert.alert('Login Successful', `Welcome back, ${user.email}`);
+          Alert.alert('Login Successful', `Welcome back, ${userName}`);
           navigation.navigate('BudgetSetup');
         }
       } else {
