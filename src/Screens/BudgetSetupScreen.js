@@ -44,12 +44,15 @@ const BudgetSetupScreen = ({ navigation }) => {
 
       Alert.alert('Success', 'Budget setup is complete!');
 
+      const formattedStartDate = startDate.toLocaleDateString();
+      const formattedEndDate = endDate.toLocaleDateString();
+
       // Navigate to HomepageScreen and pass the updated budget data
       navigation.navigate('Homepage', {
         budgetAmount: parseFloat(budgetAmount),
         budgetPeriod: {
-          startDate: startDate.toDateString(),
-          endDate: endDate.toDateString(),
+          startDate: formattedStartDate,
+          endDate: formattedEndDate,
         },
       });
     } catch (error) {
