@@ -55,13 +55,6 @@ const HomepageScreen = ({ navigation }) => {
           <Text style={styles.buttonText}>Folders</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity
-          style={styles.button}
-          onPress={() => navigation.navigate('SpendingHistory')}
-        >
-          <Text style={styles.buttonText}>Spending History</Text>
-        </TouchableOpacity>
-
         <TouchableOpacity style={styles.button} onPress={() => navigation.navigate('Profile')}>
           <Text style={styles.buttonText}>My Profile</Text>
         </TouchableOpacity>

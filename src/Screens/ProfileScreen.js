@@ -149,9 +149,7 @@ const ProfileScreen = ({ navigation }) => {
       <Text style={styles.title}>My Profile</Text>
       <Text style={styles.text}>Hello, {userName}!</Text>
       <Text style={styles.text}>Your budget is: £{budgetAmount}</Text>
-      <Text style={styles.text}>
-        Your budget has to last from {startDate} - {endDate}
-      </Text>
+      <Text style={styles.text}>Your budget has to last from {"\n"}  {startDate} until {endDate}</Text>
 
       {isEditing ? (
         <View style={styles.editContainer}>
@@ -205,12 +203,12 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 30,
     fontWeight: 'bold',
-    marginBottom: 20,
+    marginBottom: 30,
     fontFamily: 'serif',
   },
   text: {
     fontSize: 18,
-    marginBottom: 10,
+    marginBottom: 20,
     fontFamily: 'serif',
     textAlign: 'center',
   },
@@ -269,7 +267,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#00509E',
     padding: 10,
     borderRadius: 5,
-    marginTop: 20,
+    marginTop: 50,
     width: '40%',
     alignItems: 'center',
   },
