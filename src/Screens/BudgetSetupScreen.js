@@ -51,14 +51,17 @@ const BudgetSetupScreen = ({ navigation }) => {
       console.log("Formatted End Date:", formattedEndDate);
 
       // Navigate to HomepageScreen and pass the updated budget data
-      navigation.navigate('Homepage', {
-        budgetAmount: parseFloat(budgetAmount),
-        budgetPeriod: {
-          startDate: formattedStartDate,
-          endDate: formattedEndDate,
-        }
-        ,
+      navigation.navigate('Main', {
+        screen: 'Homepage',
+        params: {
+          budgetAmount: parseFloat(budgetAmount),
+          budgetPeriod: {
+            startDate: formattedStartDate,
+            endDate: formattedEndDate,
+          },
+        },
       });
+
     } catch (error) {
       console.error('Error setting budget:', error.message);
       Alert.alert('Error', 'Failed to set the budget. Please try again.');
