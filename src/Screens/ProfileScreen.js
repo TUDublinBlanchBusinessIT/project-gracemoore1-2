@@ -11,7 +11,9 @@ import {
 import { auth, db } from '../firebaseConfig';
 import { signOut } from 'firebase/auth';
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
-import DateTimePicker from '@react-native-community/datetimepicker'; // Use native date picker
+import DateTimePicker from '@react-native-community/datetimepicker'; // Native date picker
+import DatePicker from 'react-datepicker'; // Web date picker
+import 'react-datepicker/dist/react-datepicker.css';
 
 const ProfileScreen = ({ navigation }) => {
   const [userName, setUserName] = useState('');
@@ -38,8 +40,8 @@ const ProfileScreen = ({ navigation }) => {
           const userData = userDoc.data();
           setUserName(userData.name || 'User');
           setBudgetAmount(userData.budgetAmount || 0);
-          setStartDate(userData.budgetPeriod?.startDate.split('T')[0] || ''); // Extract only date
-          setEndDate(userData.budgetPeriod?.endDate.split('T')[0] || ''); // Extract only date
+          setStartDate(userData.budgetPeriod?.startDate.split('T')[0] || '');
+          setEndDate(userData.budgetPeriod?.endDate.split('T')[0] || '');
         }
       } catch (error) {
         console.error('Error fetching user data:', error);
@@ -69,19 +71,17 @@ const ProfileScreen = ({ navigation }) => {
       setEndDate(newEndDate.toISOString().split('T')[0]);
       setIsEditing(false);
       Alert.alert('Success', 'Budget updated successfully!');
-
     } catch (error) {
       console.error('Error updating budget details:', error);
       Alert.alert('Error', 'Failed to update budget details.');
     }
   };
-  
 
   const handleLogout = async () => {
     try {
       await signOut(auth);
       Alert.alert('Success', 'Logged out successfully!');
-      navigation.replace('Login'); // Redirect to Login screen
+      navigation.replace('Login');
     } catch (error) {
       console.error('Error logging out:', error);
       Alert.alert('Error', 'Failed to log out.');
@@ -94,7 +94,7 @@ const ProfileScreen = ({ navigation }) => {
       <Text style={styles.text}>Hello, {userName}!</Text>
       <Text style={styles.text}>Your budget is: £{budgetAmount}</Text>
       <Text style={styles.text}>
-        It has to last from {startDate} until {endDate}
+        Your budget has to last from {'\n'} {startDate} - {endDate}
       </Text>
 
       {isEditing ? (
@@ -107,10 +107,25 @@ const ProfileScreen = ({ navigation }) => {
             keyboardType="numeric"
           />
 
-          <TouchableOpacity onPress={() => setShowStartPicker(true)} style={styles.dateInput}>
-            <Text>New Start Date: {newStartDate.toDateString()}</Text>
-          </TouchableOpacity>
-          {showStartPicker && (
+          {Platform.OS === 'web' ? (
+            <View>
+              <Text>New Start Date:</Text>
+              <DatePicker
+                selected={newStartDate}
+                onChange={(date) => setNewStartDate(date)}
+                dateFormat="yyyy-MM-dd"
+                className="date-picker-input"
+              />
+            </View>
+          ) : (
+            <TouchableOpacity
+              onPress={() => setShowStartPicker(true)}
+              style={styles.dateInput}
+            >
+              <Text>New Start Date: {newStartDate.toDateString()}</Text>
+            </TouchableOpacity>
+          )}
+          {showStartPicker && Platform.OS !== 'web' && (
             <DateTimePicker
               value={newStartDate}
               mode="date"
@@ -122,10 +137,25 @@ const ProfileScreen = ({ navigation }) => {
             />
           )}
 
-          <TouchableOpacity onPress={() => setShowEndPicker(true)} style={styles.dateInput}>
-            <Text>New End Date: {newEndDate.toDateString()}</Text>
-          </TouchableOpacity>
-          {showEndPicker && (
+          {Platform.OS === 'web' ? (
+            <View>
+              <Text>New End Date:</Text>
+              <DatePicker
+                selected={newEndDate}
+                onChange={(date) => setNewEndDate(date)}
+                dateFormat="yyyy-MM-dd"
+                className="date-picker-input"
+              />
+            </View>
+          ) : (
+            <TouchableOpacity
+              onPress={() => setShowEndPicker(true)}
+              style={styles.dateInput}
+            >
+              <Text>New End Date: {newEndDate.toDateString()}</Text>
+            </TouchableOpacity>
+          )}
+          {showEndPicker && Platform.OS !== 'web' && (
             <DateTimePicker
               value={newEndDate}
               mode="date"
@@ -180,7 +210,7 @@ const styles = StyleSheet.create({
     fontSize: 18,
     marginBottom: 10,
     fontFamily: 'serif',
-    justifyContent:'center'
+    textAlign: 'center',
   },
   editContainer: {
     marginTop: 20,
@@ -236,3 +266,4 @@ const styles = StyleSheet.create({
 });
 
 export default ProfileScreen;
+

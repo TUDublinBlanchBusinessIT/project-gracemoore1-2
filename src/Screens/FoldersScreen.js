@@ -221,7 +221,14 @@ const FolderScreen = () => {
 
 const styles = StyleSheet.create({
   container: { flex: 1, padding: 20, backgroundColor: '#E0F7FA' },
-  title: { fontSize: 30, textAlign: 'center', marginBottom: 10, fontFamily:'serif', fontWeight: 'bold'},
+  title: { 
+    fontSize: 30, 
+    textAlign: 'center', 
+    marginBottom: 10, 
+    fontFamily:'serif',
+    fontWeight: 'bold',
+    marginTop: 70,
+  },
   budgetBox: { alignItems: 'center', marginBottom: 15 },
   budgetText: { fontSize: 16 },
   folderCard: {
