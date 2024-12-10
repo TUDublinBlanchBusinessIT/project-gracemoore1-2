@@ -21,4 +21,4 @@ const auth = getAuth(app); // Default memory-based persistence
 
 
 export { auth, app };
-export const db = getFirestore(app);
+export const db = getFirestore(app); 

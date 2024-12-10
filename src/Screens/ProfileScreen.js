@@ -11,8 +11,7 @@ import {
 import { auth, db } from '../firebaseConfig';
 import { signOut } from 'firebase/auth';
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
-import DatePicker from 'react-datepicker';
-import 'react-datepicker/dist/react-datepicker.css';
+import DateTimePicker from '@react-native-community/datetimepicker'; // Use native date picker
 
 const ProfileScreen = ({ navigation }) => {
   const [userName, setUserName] = useState('');
@@ -23,6 +22,8 @@ const ProfileScreen = ({ navigation }) => {
   const [newBudgetAmount, setNewBudgetAmount] = useState('');
   const [newStartDate, setNewStartDate] = useState(new Date());
   const [newEndDate, setNewEndDate] = useState(new Date());
+  const [showStartPicker, setShowStartPicker] = useState(false);
+  const [showEndPicker, setShowEndPicker] = useState(false);
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -104,23 +105,35 @@ const ProfileScreen = ({ navigation }) => {
             keyboardType="numeric"
           />
 
-          <View style={styles.datePickerContainer}>
-            <Text style={styles.dateLabel}>New Start Date:</Text>
-            <DatePicker
-              selected={newStartDate}
-              onChange={(date) => setNewStartDate(date)}
-              className="date-picker-input"
+          <TouchableOpacity onPress={() => setShowStartPicker(true)} style={styles.dateInput}>
+            <Text>New Start Date: {newStartDate.toDateString()}</Text>
+          </TouchableOpacity>
+          {showStartPicker && (
+            <DateTimePicker
+              value={newStartDate}
+              mode="date"
+              display="default"
+              onChange={(_, selectedDate) => {
+                setShowStartPicker(false);
+                if (selectedDate) setNewStartDate(selectedDate);
+              }}
             />
-          </View>
+          )}
 
-          <View style={styles.datePickerContainer}>
-            <Text style={styles.dateLabel}>New End Date:</Text>
-            <DatePicker
-              selected={newEndDate}
-              onChange={(date) => setNewEndDate(date)}
-              className="date-picker-input"
+          <TouchableOpacity onPress={() => setShowEndPicker(true)} style={styles.dateInput}>
+            <Text>New End Date: {newEndDate.toDateString()}</Text>
+          </TouchableOpacity>
+          {showEndPicker && (
+            <DateTimePicker
+              value={newEndDate}
+              mode="date"
+              display="default"
+              onChange={(_, selectedDate) => {
+                setShowEndPicker(false);
+                if (selectedDate) setNewEndDate(selectedDate);
+              }}
             />
-          </View>
+          )}
 
           <TouchableOpacity style={styles.saveButton} onPress={saveBudgetDetails}>
             <Text style={styles.buttonText}>Save Changes</Text>
@@ -181,14 +194,13 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     width: '100%',
   },
-  datePickerContainer: {
+  dateInput: {
     marginBottom: 10,
+    backgroundColor: '#FFFFFF',
+    padding: 10,
+    borderRadius: 5,
     alignItems: 'center',
-  },
-  dateLabel: {
-    fontSize: 16,
-    marginBottom: 5,
-    fontFamily: 'serif',
+    width: '100%',
   },
   editButton: {
     backgroundColor: '#00509E',
@@ -221,6 +233,3 @@ const styles = StyleSheet.create({
 });
 
 export default ProfileScreen;
-
-
-
