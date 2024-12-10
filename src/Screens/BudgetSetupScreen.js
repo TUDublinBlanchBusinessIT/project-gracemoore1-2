@@ -1,10 +1,16 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, Alert, StyleSheet, Platform } from 'react-native';
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  Alert,
+  StyleSheet,
+  Platform,
+} from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
-import { auth, db } from '../firebaseConfig'; // Firebase configuration
-import { doc, updateDoc } from 'firebase/firestore'; // Firestore methods
-
-
+import { auth, db } from '../firebaseConfig';
+import { doc, updateDoc } from 'firebase/firestore';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 
@@ -22,57 +28,101 @@ const BudgetSetupScreen = ({ navigation }) => {
     }
 
     try {
-      const user = auth.currentUser; // Get the currently logged-in user
+      const user = auth.currentUser;
 
       if (!user) {
         Alert.alert('Error', 'User not logged in.');
         return;
       }
 
-      // Reference to the user's Firestore document
       const userDocRef = doc(db, 'users', user.uid);
 
-      // Update the user's budget data in Firestore
       await updateDoc(userDocRef, {
-        budgetSet: true, // Mark the budget as set
-        budgetAmount: parseFloat(budgetAmount), // Convert amount to a number
+        budgetSet: true,
+        budgetAmount: parseFloat(budgetAmount),
         budgetPeriod: {
-          startDate: startDate.toISOString(), // Save dates as ISO strings
+          startDate: startDate.toISOString(),
           endDate: endDate.toISOString(),
         },
       });
 
       Alert.alert('Success', 'Budget setup is complete!');
-
-      const formattedStartDate = startDate.toLocaleDateString();
-      const formattedEndDate = endDate.toLocaleDateString();
-
-      console.log("Formatted Start Date:", formattedStartDate);
-      console.log("Formatted End Date:", formattedEndDate);
-
-      // Navigate to HomepageScreen and pass the updated budget data
       navigation.navigate('Main', {
         screen: 'Homepage',
         params: {
           budgetAmount: parseFloat(budgetAmount),
           budgetPeriod: {
-            startDate: formattedStartDate,
-            endDate: formattedEndDate,
+            startDate: startDate.toLocaleDateString(),
+            endDate: endDate.toLocaleDateString(),
           },
         },
       });
-
     } catch (error) {
       console.error('Error setting budget:', error.message);
       Alert.alert('Error', 'Failed to set the budget. Please try again.');
     }
-  }
+  };
+
+  const renderDatePicker = (isStartDate) => {
+    if (Platform.OS === 'web') {
+      return (
+        <View style={styles.datePickerRow}>
+          <Text style={styles.dateLabel}>
+            {isStartDate ? 'Start Date:' : 'End Date:'}
+          </Text>
+          <DatePicker
+            selected={isStartDate ? startDate : endDate}
+            onChange={(date) =>
+              isStartDate ? setStartDate(date) : setEndDate(date)
+            }
+            dateFormat="yyyy-MM-dd"
+            className="date-picker-input"
+            popperPlacement="bottom-start"
+            portalId="root-portal"
+          />
+        </View>
+      );
+    } else {
+      return (
+        <TouchableOpacity
+          onPress={() =>
+            isStartDate
+              ? setShowStartPicker(true)
+              : setShowEndPicker(true)
+          }
+          style={styles.dateInput}
+        >
+          <Text>
+            {isStartDate
+              ? `Start Date: ${startDate.toDateString()}`
+              : `End Date: ${endDate.toDateString()}`}
+          </Text>
+          {(isStartDate && showStartPicker) ||
+          (!isStartDate && showEndPicker) ? (
+            <DateTimePicker
+              value={isStartDate ? startDate : endDate}
+              mode="date"
+              display="default"
+              onChange={(_, selectedDate) => {
+                if (isStartDate) {
+                  setShowStartPicker(false);
+                  if (selectedDate) setStartDate(selectedDate);
+                } else {
+                  setShowEndPicker(false);
+                  if (selectedDate) setEndDate(selectedDate);
+                }
+              }}
+            />
+          ) : null}
+        </TouchableOpacity>
+      );
+    }
+  };
 
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Set Up Your Budget!</Text>
 
-      {/* Budget Amount Input */}
       <TextInput
         style={styles.input}
         placeholder="Enter budget amount (£)"
@@ -82,69 +132,11 @@ const BudgetSetupScreen = ({ navigation }) => {
       />
 
       {/* Start Date Picker */}
-      {Platform.OS === 'web' ? (
-        <View style={styles.row}>
-          <Text style={styles.label}>Start Date:</Text>
-          <DatePicker
-            selected={startDate}
-            onChange={(date) => setStartDate(date)}
-            dateFormat="yyyy/MM/dd"
-            className="date-picker-input"
-            popperPlacement="bottom-start" // Ensures dropdown opens below
-            portalId="root-portal"
-          />
-  
-        </View>
-      ) : (
-      <TouchableOpacity onPress={() => setShowStartPicker(true)} style={styles.input}>
-        <Text style={styles.dateText}>Start Date: {startDate.toDateString()}</Text>
-      </TouchableOpacity>
-      )}
-      {showStartPicker && Platform.OS !== 'web' && (
-        <DateTimePicker
-          value={startDate}
-          mode="date"
-          display="default"
-          onChange={(_, date) => {
-            setShowStartPicker(false);
-            if (date) setStartDate(date);
-          }}
-        />
-      )}
-
+      {renderDatePicker(true)}
 
       {/* End Date Picker */}
-      {Platform.OS === 'web' ? (
-        <View style={styles.row}>
-          <Text style={styles.label}>End Date:</Text>
-          <DatePicker
-            selected={endDate}
-            onChange={(date) => setEndDate(date)}
-            dateFormat="yyyy/MM/dd"
-            className="date-picker-input"
-            popperPlacement="bottom-start"
-            portalId="root-portal"
-          />
-        </View>
-      ) : (
-      <TouchableOpacity onPress={() => setShowEndPicker(true)} style={styles.input}>
-        <Text style={styles.dateText}>End Date: {endDate.toDateString()}</Text>
-      </TouchableOpacity>
-      )}
-      {showEndPicker && Platform.OS !== 'web' && (
-        <DateTimePicker
-          value={endDate}
-          mode="date"
-          display="default"
-          onChange={(_, date) => {
-            setShowEndPicker(false);
-            if (date) setEndDate(date);
-          }}
-        />
-      )}
+      {renderDatePicker(false)}
 
-
-      {/* Submit Button */}
       <TouchableOpacity style={styles.button} onPress={handleSubmit}>
         <Text style={styles.buttonText}>Submit</Text>
       </TouchableOpacity>
@@ -169,7 +161,7 @@ const styles = StyleSheet.create({
   },
   input: {
     height: 40,
-    width: Platform.OS === 'web' ? '40%' : '80%', // Adjust width for web vs mobile
+    width: Platform.OS === 'web' ? '40%' : '80%',
     alignSelf: 'center',
     borderColor: '#ccc',
     backgroundColor: '#FFFFFF',
@@ -179,30 +171,30 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     fontFamily: 'serif',
   },
-  dateText: {
+  dateInput: {
+    marginBottom: 10,
     backgroundColor: '#FFFFFF',
     padding: 10,
     borderRadius: 5,
-    borderWidth: 0,
+    borderWidth: 1,
     borderColor: '#ccc',
-    marginBottom: 0,
-    fontFamily: 'serif',
+    width: '100%',
+    alignItems: 'center',
   },
-  row: {
+  datePickerRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: Platform.OS === 'web' ? 20 : 20,
+    marginBottom: 10,
+    width: '100%',
   },
-  label: {
-    fontSize: Platform.OS === 'web' ? 16 : 14, // Smaller font for mobile
+  dateLabel: {
+    fontSize: 16,
     fontWeight: 'bold',
     marginRight: 10,
-    fontFamily: 'serif',
   },
-
   button: {
-    width: Platform.OS === 'web' ? '40%' : '60%', // Wider button for mobile
+    width: Platform.OS === 'web' ? '40%' : '60%',
     backgroundColor: '#00509E',
     paddingVertical: 10,
     borderRadius: 5,
