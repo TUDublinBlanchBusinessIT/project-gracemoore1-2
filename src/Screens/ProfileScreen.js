@@ -11,8 +11,8 @@ import {
 import { auth, db } from '../firebaseConfig';
 import { signOut } from 'firebase/auth';
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
-import DateTimePicker from '@react-native-community/datetimepicker'; // Native date picker
-import DatePicker from 'react-datepicker'; // Web date picker
+import DateTimePicker from '@react-native-community/datetimepicker'; // Native picker for iOS/Android
+import DatePicker from 'react-datepicker'; // Web picker
 import 'react-datepicker/dist/react-datepicker.css';
 
 const ProfileScreen = ({ navigation }) => {
@@ -40,8 +40,8 @@ const ProfileScreen = ({ navigation }) => {
           const userData = userDoc.data();
           setUserName(userData.name || 'User');
           setBudgetAmount(userData.budgetAmount || 0);
-          setStartDate(userData.budgetPeriod?.startDate.split('T')[0] || '');
-          setEndDate(userData.budgetPeriod?.endDate.split('T')[0] || '');
+          setStartDate(userData.budgetPeriod?.startDate.split('T')[0] || ''); // Extract only date
+          setEndDate(userData.budgetPeriod?.endDate.split('T')[0] || ''); // Extract only date
         }
       } catch (error) {
         console.error('Error fetching user data:', error);
@@ -88,13 +88,69 @@ const ProfileScreen = ({ navigation }) => {
     }
   };
 
+  const renderDatePicker = (isStartDate) => {
+    if (Platform.OS === 'web') {
+      return (
+        <View style={styles.datePickerRow}>
+          <Text style={styles.dateLabel}>
+            {isStartDate ? 'New Start Date:' : 'New End Date:'}
+          </Text>
+          <DatePicker
+            selected={isStartDate ? newStartDate : newEndDate}
+            onChange={(date) =>
+              isStartDate ? setNewStartDate(date) : setNewEndDate(date)
+            }
+            dateFormat="yyyy-MM-dd"
+            className="date-picker-input"
+            popperPlacement="bottom-start"
+            portalId="root-portal"
+          />
+        </View>
+      );
+    } else {
+      return (
+        <TouchableOpacity
+          onPress={() =>
+            isStartDate
+              ? setShowStartPicker(true)
+              : setShowEndPicker(true)
+          }
+          style={styles.dateInput}
+        >
+          <Text>
+            {isStartDate
+              ? `New Start Date: ${newStartDate.toDateString()}`
+              : `New End Date: ${newEndDate.toDateString()}`}
+          </Text>
+          {(isStartDate && showStartPicker) ||
+          (!isStartDate && showEndPicker) ? (
+            <DateTimePicker
+              value={isStartDate ? newStartDate : newEndDate}
+              mode="date"
+              display="default"
+              onChange={(_, selectedDate) => {
+                if (isStartDate) {
+                  setShowStartPicker(false);
+                  if (selectedDate) setNewStartDate(selectedDate);
+                } else {
+                  setShowEndPicker(false);
+                  if (selectedDate) setNewEndDate(selectedDate);
+                }
+              }}
+            />
+          ) : null}
+        </TouchableOpacity>
+      );
+    }
+  };
+
   return (
     <View style={styles.container}>
       <Text style={styles.title}>My Profile</Text>
       <Text style={styles.text}>Hello, {userName}!</Text>
       <Text style={styles.text}>Your budget is: £{budgetAmount}</Text>
       <Text style={styles.text}>
-        Your budget has to last from {'\n'} {startDate} - {endDate}
+        Your budget has to last from {startDate} - {endDate}
       </Text>
 
       {isEditing ? (
@@ -107,65 +163,11 @@ const ProfileScreen = ({ navigation }) => {
             keyboardType="numeric"
           />
 
-          {Platform.OS === 'web' ? (
-            <View>
-              <Text>New Start Date:</Text>
-              <DatePicker
-                selected={newStartDate}
-                onChange={(date) => setNewStartDate(date)}
-                dateFormat="yyyy-MM-dd"
-                className="date-picker-input"
-              />
-            </View>
-          ) : (
-            <TouchableOpacity
-              onPress={() => setShowStartPicker(true)}
-              style={styles.dateInput}
-            >
-              <Text>New Start Date: {newStartDate.toDateString()}</Text>
-            </TouchableOpacity>
-          )}
-          {showStartPicker && Platform.OS !== 'web' && (
-            <DateTimePicker
-              value={newStartDate}
-              mode="date"
-              display="default"
-              onChange={(_, selectedDate) => {
-                setShowStartPicker(false);
-                if (selectedDate) setNewStartDate(selectedDate);
-              }}
-            />
-          )}
+          {/* Render Start Date Picker */}
+          {renderDatePicker(true)}
 
-          {Platform.OS === 'web' ? (
-            <View>
-              <Text>New End Date:</Text>
-              <DatePicker
-                selected={newEndDate}
-                onChange={(date) => setNewEndDate(date)}
-                dateFormat="yyyy-MM-dd"
-                className="date-picker-input"
-              />
-            </View>
-          ) : (
-            <TouchableOpacity
-              onPress={() => setShowEndPicker(true)}
-              style={styles.dateInput}
-            >
-              <Text>New End Date: {newEndDate.toDateString()}</Text>
-            </TouchableOpacity>
-          )}
-          {showEndPicker && Platform.OS !== 'web' && (
-            <DateTimePicker
-              value={newEndDate}
-              mode="date"
-              display="default"
-              onChange={(_, selectedDate) => {
-                setShowEndPicker(false);
-                if (selectedDate) setNewEndDate(selectedDate);
-              }}
-            />
-          )}
+          {/* Render End Date Picker */}
+          {renderDatePicker(false)}
 
           <TouchableOpacity style={styles.saveButton} onPress={saveBudgetDetails}>
             <Text style={styles.buttonText}>Save Changes</Text>
@@ -232,8 +234,22 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     padding: 10,
     borderRadius: 5,
-    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#ccc',
     width: '100%',
+    alignItems: 'center',
+  },
+  datePickerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 10,
+    width: '100%',
+  },
+  dateLabel: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginRight: 10,
   },
   editButton: {
     backgroundColor: '#00509E',
@@ -266,4 +282,5 @@ const styles = StyleSheet.create({
 });
 
 export default ProfileScreen;
+
 
