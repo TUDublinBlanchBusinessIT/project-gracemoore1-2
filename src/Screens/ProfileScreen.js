@@ -70,18 +70,12 @@ const ProfileScreen = ({ navigation }) => {
       setIsEditing(false);
       Alert.alert('Success', 'Budget updated successfully!');
 
-      navigation.navigate('Main', { screen: 'Homepage' });
-
-      Alert.alert('Success', 'Budget updated successfully!');
     } catch (error) {
       console.error('Error updating budget details:', error);
       Alert.alert('Error', 'Failed to update budget details.');
     }
-  }; 
-    } catch (error) {
-      console.error('Error updating budget details:', error);
-      Alert.alert('Error', 'Failed to update budget details.');
-    }
+  };
+  
 
   const handleLogout = async () => {
     try {
@@ -177,7 +171,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   title: {
-    fontSize: 24,
+    fontSize: 30,
     fontWeight: 'bold',
     marginBottom: 20,
     fontFamily: 'serif',

@@ -104,7 +104,7 @@ const BudgetSetupScreen = ({ navigation }) => {
         <DateTimePicker
           value={startDate}
           mode="date"
-          display={Platform.OS === 'ios' ? 'spinner' : 'calendar'} 
+          display="default"
           onChange={(_, date) => {
             setShowStartPicker(false);
             if (date) setStartDate(date);
@@ -135,7 +135,7 @@ const BudgetSetupScreen = ({ navigation }) => {
         <DateTimePicker
           value={endDate}
           mode="date"
-          display={Platform.OS === 'ios' ? 'spinner' : 'calendar'} 
+          display="default"
           onChange={(_, date) => {
             setShowEndPicker(false);
             if (date) setEndDate(date);

@@ -1,16 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import {
-  View,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  StyleSheet,
-  FlatList,
-  Alert,
-  Platform,
-} from 'react-native';
-import { auth, db } from '../firebaseConfig'; // Import your Firebase configuration
-import { doc, getDoc, updateDoc } from 'firebase/firestore'; // Firestore methods
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, FlatList, Alert, Platform } from 'react-native';
+import { useFocusEffect } from '@react-navigation/native';
+import { auth, db } from '../firebaseConfig';
+import { doc, getDoc, updateDoc } from 'firebase/firestore';
 
 const FolderScreen = () => {
   const [folders, setFolders] = useState([]);
@@ -23,17 +15,22 @@ const FolderScreen = () => {
   const [remainingBudget, setRemainingBudget] = useState(0);
   const [budgetAmount, setBudgetAmount] = useState(0);
 
-  // Fetch user ID on component mount
   useEffect(() => {
     const user = auth.currentUser;
     if (user) {
       setUserId(user.uid);
-      fetchFolders(user.uid);
-      fetchBudget(user.uid);
     }
   }, []);
 
-  // Fetch folders from Firestore
+  useFocusEffect(
+    React.useCallback(() => {
+      if (userId) {
+        fetchFolders(userId);
+        fetchBudget(userId);
+      }
+    }, [userId])
+  );
+
   const fetchFolders = async (uid) => {
     try {
       const userDocRef = doc(db, 'users', uid);
@@ -41,6 +38,8 @@ const FolderScreen = () => {
 
       if (userDoc.exists() && userDoc.data().folders) {
         setFolders(userDoc.data().folders);
+      } else {
+        setFolders([]);
       }
     } catch (error) {
       console.error('Error fetching folders:', error);
@@ -48,16 +47,16 @@ const FolderScreen = () => {
     }
   };
 
-  // Fetch budget amount and calculate remaining budget
   const fetchBudget = async (uid) => {
     try {
       const userDocRef = doc(db, 'users', uid);
       const userDoc = await getDoc(userDocRef);
 
       if (userDoc.exists() && userDoc.data().budgetAmount) {
-        const totalSpent = userDoc
-          .data()
-          .folders.reduce((sum, folder) => sum + folder.spentSoFar, 0);
+        const totalSpent = (userDoc.data().folders || []).reduce(
+          (sum, folder) => sum + (folder.spentSoFar || 0),
+          0
+        );
         const userBudget = userDoc.data().budgetAmount;
         setBudgetAmount(userBudget);
         setRemainingBudget(userBudget - totalSpent);
@@ -68,7 +67,6 @@ const FolderScreen = () => {
     }
   };
 
-  // Add a new folder
   const addFolder = async () => {
     if (!newFolderName || !newAllocatedBudget) {
       Alert.alert('Error', 'Please fill in all fields.');
@@ -76,25 +74,22 @@ const FolderScreen = () => {
     }
 
     const newFolder = {
-      id: Date.now().toString(), // Unique ID
+      id: Date.now().toString(),
       name: newFolderName,
       allocatedBudget: parseFloat(newAllocatedBudget),
-      spentSoFar: 0, // Initialize spent amount
+      spentSoFar: 0,
     };
 
     const updatedFolders = [...folders, newFolder];
-
     setFolders(updatedFolders);
     setNewFolderName('');
     setNewAllocatedBudget('');
     setShowAddFolder(false);
 
-    // Save updated folders to Firestore
     await saveFoldersToFirestore(updatedFolders);
-    fetchBudget(userId); // Update the remaining budget
+    fetchBudget(userId);
   };
 
-  // Update folder expense
   const updateFolder = async (id, expense) => {
     const updatedFolders = folders.map((folder) =>
       folder.id === id
@@ -107,23 +102,19 @@ const FolderScreen = () => {
 
     setFolders(updatedFolders);
 
-    // Save updated folders to Firestore
     await saveFoldersToFirestore(updatedFolders);
-    fetchBudget(userId); // Update the remaining budget
-    setExpenseInputId(null); // Close the input after submission
+    fetchBudget(userId);
+    setExpenseInputId(null);
   };
 
-  // Delete a folder
   const deleteFolder = async (id) => {
     const updatedFolders = folders.filter((folder) => folder.id !== id);
     setFolders(updatedFolders);
 
-    // Save updated folders to Firestore
     await saveFoldersToFirestore(updatedFolders);
-    fetchBudget(userId); // Update the remaining budget
+    fetchBudget(userId);
   };
 
-  // Save folders to Firestore
   const saveFoldersToFirestore = async (updatedFolders) => {
     try {
       const userDocRef = doc(db, 'users', userId);
@@ -134,19 +125,13 @@ const FolderScreen = () => {
     }
   };
 
-  // Render each folder
   const renderFolder = ({ item }) => (
     <View style={styles.folderCard}>
-      <TouchableOpacity
-        style={styles.deleteButton}
-        onPress={() => deleteFolder(item.id)}
-      >
+      <TouchableOpacity style={styles.deleteButton} onPress={() => deleteFolder(item.id)}>
         <Text style={styles.deleteButtonText}>X</Text>
       </TouchableOpacity>
       <Text style={styles.folderName}>{item.name}</Text>
-      <Text style={styles.folderDetail}>
-        Allocated: £{item.allocatedBudget}
-      </Text>
+      <Text style={styles.folderDetail}>Allocated: £{item.allocatedBudget}</Text>
       <Text style={styles.folderDetail}>Spent So Far: £{item.spentSoFar}</Text>
       <Text style={styles.folderDetail}>
         Remaining: £{item.allocatedBudget - item.spentSoFar}
@@ -176,10 +161,7 @@ const FolderScreen = () => {
           </TouchableOpacity>
         </View>
       ) : (
-        <TouchableOpacity
-          style={styles.addExpenseButton}
-          onPress={() => setExpenseInputId(item.id)}
-        >
+        <TouchableOpacity style={styles.addExpenseButton} onPress={() => setExpenseInputId(item.id)}>
           <Text style={styles.addExpenseText}>+ Add Expense</Text>
         </TouchableOpacity>
       )}
@@ -189,16 +171,12 @@ const FolderScreen = () => {
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Folders</Text>
-
       <View style={styles.budgetBox}>
         <Text style={styles.budgetText}>Total Budget: £{budgetAmount}</Text>
         <Text style={styles.budgetText}>Remaining: £{remainingBudget}</Text>
       </View>
 
-      <TouchableOpacity
-        style={styles.plusButton}
-        onPress={() => setShowAddFolder(!showAddFolder)}
-      >
+      <TouchableOpacity style={styles.plusButton} onPress={() => setShowAddFolder(!showAddFolder)}>
         <Text style={styles.plusText}>{showAddFolder ? '-' : '+'}</Text>
       </TouchableOpacity>
 
@@ -222,6 +200,7 @@ const FolderScreen = () => {
           </TouchableOpacity>
         </View>
       )}
+
       <FlatList
         data={folders}
         renderItem={renderFolder}
@@ -241,34 +220,14 @@ const FolderScreen = () => {
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#E0F7FA',
-    padding: 20,
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    textAlign: 'center',
-    marginBottom: 10,
-    marginTop: Platform.OS === 'web' ? 20 : 90,
-    fontFamily: 'serif',
-  },
-  budgetBox: {
-    backgroundColor: '#FFFFFF',
-    padding: 10,
-    borderRadius: 10,
-    alignItems: 'center',
-    marginBottom: 15,
-  },
-  budgetText: {
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
+  container: { flex: 1, padding: 20, backgroundColor: '#E0F7FA' },
+  title: { fontSize: 30, textAlign: 'center', marginBottom: 10, fontFamily:'serif', fontWeight: 'bold'},
+  budgetBox: { alignItems: 'center', marginBottom: 15 },
+  budgetText: { fontSize: 16 },
   folderCard: {
     flex: 1,
     margin: 5,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#fff',
     borderRadius: 10,
     padding: 15,
     alignItems: 'center',
@@ -284,47 +243,36 @@ const styles = StyleSheet.create({
     paddingHorizontal: 5,
     zIndex: 1,
   },
-  deleteButtonText: {
-    color: '#FFFFFF',
-    fontSize: 14,
-    fontWeight: 'bold',
+  deleteButtonText: { 
+    color: '#fff', 
+    fontSize: 14, 
+    fontWeight: 'bold' 
   },
-  folderName: {
-    fontSize: 18,
+  folderName: { 
+    fontSize: 18, 
     fontWeight: 'bold',
-    marginBottom: 5,
+    marginBottom: 5, 
   },
   folderDetail: {
-    fontSize: 14,
-    color: '#555',
+     fontSize: 14, 
   },
   addFolderContainer: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 10,
-    padding: 15,
-    marginBottom: 15,
-    borderWidth: 1,
-    borderColor: '#ccc',
+     marginBottom: 20, 
   },
-  input: {
-    height: 40,
-    borderColor: '#ccc',
+  input: { 
+    padding: 10, 
     borderWidth: 1,
-    borderRadius: 5,
     marginBottom: 10,
-    paddingHorizontal: 10,
-    backgroundColor: '#FFFFFF',
+    backgroundColor:'#fff', 
   },
-  addButton: {
-    backgroundColor: '#00509E',
-    padding: 10,
-    borderRadius: 5,
-    alignItems: 'center',
+  addButton: { 
+    padding: 10, 
+    backgroundColor: '#00509E', 
+    alignItems: 'center' 
   },
   addButtonText: {
-    color: '#FFFFFF',
-    fontWeight: 'bold',
-    fontSize: 16,
+   color: '#fff',
+   fontWeight: 'bold',
   },
   plusButton: {
     alignSelf: 'center',
@@ -336,33 +284,14 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  plusText: {
-    fontSize: 28,
-    color: '#FFFFFF',
-  },
-  expenseInputContainer: {
-    marginTop: 10,
-    width: '100%',
-  },
-  expenseInput: {
-    borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: 5,
-    paddingHorizontal: 10,
-    height: 40,
-    marginBottom: 10,
-  },
-  addExpenseButton: {
-    backgroundColor: '#00509E',
-    borderRadius: 5,
-    padding: 10,
-    alignItems: 'center',
-    marginTop: 5,
-  },
-  addExpenseText: {
-    color: '#FFFFFF',
-    fontSize: 14,
-  },
+  plusText: { fontSize: 28, color: '#fff' },
+  expenseInputContainer: { marginTop: 10, width: '100%', marginBottom: 15 },
+  expenseInput: { borderWidth: 1, borderColor: '#ccc', borderRadius: 5, paddingHorizontal: 10, marginBottom:15 },
+  addExpenseButton: { backgroundColor: '#00509E', borderRadius: 5, padding: 10, alignItems: 'center', marginBottom: 5, marginTop:10 },
+  addExpenseText: { color: '#fff', fontSize: 14 },
 });
 
 export default FolderScreen;
+
+
+
